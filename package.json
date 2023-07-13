@@ -21,5 +21,9 @@
   "bugs": {
     "url": "https://github.com/TNTzx/CaniJS/issues"
   },
-  "homepage": "https://github.com/TNTzx/CaniJS#readme"
+  "homepage": "https://github.com/TNTzx/CaniJS#readme",
+  "dependencies": {
+    "discord.js": "^14.11.0",
+    "prisma": "^5.0.0"
+  }
 }
