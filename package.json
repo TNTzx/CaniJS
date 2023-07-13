@@ -1,0 +1,25 @@
+{
+  "name": "canijs",
+  "version": "1.0.0",
+  "description": "cani but in javascript",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TNTzx/CaniJS.git"
+  },
+  "keywords": [
+    "cani",
+    "js",
+    "javascript",
+    "dog"
+  ],
+  "author": "TNTzx",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TNTzx/CaniJS/issues"
+  },
+  "homepage": "https://github.com/TNTzx/CaniJS#readme"
+}
