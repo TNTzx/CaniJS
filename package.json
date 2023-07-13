@@ -2,6 +2,7 @@
   "name": "canijs",
   "version": "1.0.0",
   "description": "cani but in javascript",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "pm": "npx prisma migrate dev"
