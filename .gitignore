@@ -134,4 +134,8 @@ dist
 prisma/migrations/
 
 # test library
-# src/libraries/test/
+# to make changes to it locally without committing it with all the other files:
+#   git update-index --assume-unchanged "src/libraries/test/test.ts"
+# to not:
+#   git update-index --no-assume-unchanged "src/libraries/test/test.ts"
+src/libraries/test/
