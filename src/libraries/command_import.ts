@@ -11,9 +11,7 @@ let commandList = [
 
 if (DjsTools.getDevEnvStatus()) {
     import('./test/test').then((Test) => {
-        const commandListTests = [
-            Test.cmdTest
-        ]
+        const commandListTests = Test.default
         commandList = commandList.concat(commandListTests)
     }).catch(() => {})
 }
