@@ -2,7 +2,7 @@ import * as DjsTools from '../../djs-tools'
 
 
 
-let cmdHello: DjsTools.CmdReg.CmdBundle = {
+export const cmdHello: DjsTools.CmdReg.CmdBundle = {
     cmdInfo: {
         name: 'hello',
         description: 'Says hello! Dog!',
@@ -10,8 +10,6 @@ let cmdHello: DjsTools.CmdReg.CmdBundle = {
     },
 
     execute: async (interaction) => {
-        interaction.reply('Hellooo! :D')
+        await interaction.followUp('Hellooo! :D')
     }
 }
-
-export default cmdHello

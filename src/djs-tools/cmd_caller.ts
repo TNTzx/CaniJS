@@ -1,7 +1,6 @@
 import Djs from 'discord.js'
 
 import * as CmdRegister from './cmd_register'
-import * as CmdPermissions from './permissions'
 
 
 
@@ -12,7 +11,7 @@ export default function addCmdCaller(client: Djs.Client) {
         const cmdBundle = CmdRegister.getRegisteredCmds().get(interaction.commandName)
 
         if (cmdBundle === undefined) {
-            interaction.reply(`\`${interaction.commandName}\` is not a command.`)
+            await interaction.reply(`\`${interaction.commandName}\` is not a command.`)
             return
         }
 
@@ -20,7 +19,7 @@ export default function addCmdCaller(client: Djs.Client) {
         if (cmdBundle.cmdInfo.permissions !== undefined) {
             for (const cmdPerm of cmdBundle.cmdInfo.permissions) {
                 if (!cmdPerm.checkGrant(interaction)) {
-                    interaction.reply({content: `You do not have the permission to use this command! ${cmdPerm.onRejectMessage}`})
+                    await interaction.reply(`You do not have the permission to use this command! ${cmdPerm.onRejectMessage}`)
                     return
                 }
             }
@@ -29,11 +28,12 @@ export default function addCmdCaller(client: Djs.Client) {
 
 
         try {
-            cmdBundle.execute(interaction)
+            await interaction.reply('Executing command...')
+            await cmdBundle.execute(interaction)
         } catch (error) {
             console.error(error)
 
-            let messageContent: Djs.InteractionReplyOptions = {
+            const messageContent: Djs.InteractionReplyOptions = {
                 content: 'There was an error while executing this command!',
                 ephemeral: true
             }

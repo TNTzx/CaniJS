@@ -1,9 +1,9 @@
-import hello from './hello/hello'
+import * as Hello from './hello/hello'
 
 
 
 const commandList = [
-    hello
+    Hello.cmdHello
 ]
 
 export default commandList
