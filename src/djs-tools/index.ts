@@ -1,3 +1,4 @@
-export * as Client from './client'
-export * as CmdReg from './cmd_register'
-export * as CmdPermissions from './permissions'
+export * from './client'
+export * from './cmd_caller'
+export * from './cmd_register'
+export * from './permissions'

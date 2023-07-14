@@ -1,9 +1,22 @@
+import * as DjsTools from '../djs-tools'
+
 import * as Hello from './hello/hello'
 
 
 
-const commandList = [
+let commandList = [
     Hello.cmdHello
 ]
+
+
+if (DjsTools.getDevEnvStatus()) {
+    import('./test/test').then((Test) => {
+        const commandListTests = [
+            Test.cmdTest
+        ]
+        commandList = commandList.concat(commandListTests)
+    }).catch(() => {})
+}
+
 
 export default commandList

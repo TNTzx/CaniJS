@@ -13,30 +13,21 @@ function validateKeyFromEnv(keyFromEnv: string | undefined) {
     return keyFromEnv
 }
 
-let botToken = process.env.bot_token
+const botToken = process.env.bot_token
 export function getBotToken() {
     return validateKeyFromEnv(botToken)
 }
 
-let appId = process.env.application_id
+const appId = process.env.application_id
 export function getAppId() {
     return validateKeyFromEnv(appId)
 }
 
 
-export class ClientExtend extends Djs.Client {
-    commands: Djs.Collection<any, any>
-
-    constructor(options: Djs.ClientOptions) {
-        super(options)
-        this.commands = new Djs.Collection()
-    }
-}
-
-let globalClient: ClientExtend | null = null
+let globalClient: Djs.Client | null = null
 
 
-export function setClient(client: ClientExtend) {
+export function setClient(client: Djs.Client) {
     globalClient = client
 }
 
@@ -45,7 +36,8 @@ export function getClient() {
     return globalClient
 }
 
-export function clientLogin() {
+
+export async function clientLogin() {
     const client = getClient()
 
     client.once(Djs.Events.ClientReady, clientPass => {
@@ -55,7 +47,7 @@ export function clientLogin() {
     CmdCaller(client)
 
     console.log('Logging into client for running...')
-    client.login(getBotToken())
+    await client.login(getBotToken())
 }
 
 
@@ -90,4 +82,14 @@ export async function deployCmdsGuildBased() {
 	} catch (error) {
 		console.error(error)
 	}
+}
+
+
+let devEnvStatus = false
+export function setDevEnvStatus(isDevEnv: boolean) {
+    devEnvStatus = isDevEnv
+}
+
+export function getDevEnvStatus() {
+    return devEnvStatus
 }

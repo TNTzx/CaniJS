@@ -132,3 +132,6 @@ dist
 
 # prisma
 prisma/migrations/
+
+# test library
+src/libraries/test/

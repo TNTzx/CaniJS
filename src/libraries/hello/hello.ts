@@ -2,11 +2,11 @@ import * as DjsTools from '../../djs-tools'
 
 
 
-export const cmdHello: DjsTools.CmdReg.CmdBundle = {
+export const cmdHello: DjsTools.CmdBundle = {
     cmdInfo: {
         name: 'hello',
         description: 'Says hello! Dog!',
-        permissions: [DjsTools.CmdPermissions.permServerOwner]
+        permissions: [DjsTools.permServerOwner]
     },
 
     execute: async (interaction) => {

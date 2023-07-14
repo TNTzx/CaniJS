@@ -1,12 +1,11 @@
 import Djs from 'discord.js'
-import * as DjsToolsClient from './djs-tools/client'
-import * as DjsToolsCmdReg from './djs-tools/cmd_register'
+import * as DjsTools from './djs-tools'
 
 import commands from './libraries/command_import'
 
 
 
-DjsToolsClient.setClient(new DjsToolsClient.ClientExtend({
+DjsTools.setClient(new Djs.Client({
     intents: [
         Djs.GatewayIntentBits.Guilds,
         Djs.GatewayIntentBits.GuildPresences,
@@ -15,16 +14,30 @@ DjsToolsClient.setClient(new DjsToolsClient.ClientExtend({
     ]
 }))
 
-DjsToolsCmdReg.addAllCmds(commands)
+DjsTools.addAllCmds(commands)
 
 const mode = process.argv[2]
+const environment = process.argv[3]
+
+if (environment === '--dev') {
+    DjsTools.setDevEnvStatus(true)
+} else if (environment === '--prod') {
+    DjsTools.setDevEnvStatus(false)
+} else {
+    throw new Error('Please pass a mode for the third argument: --dev or --deploy-cmds-global or --prod.')
+}
+
+
+let modePromise: Promise<void> = (async () => {})()
 
 if (mode === '--deploy-cmds-guild') {
-    DjsToolsClient.deployCmdsGuildBased()
+    modePromise = DjsTools.deployCmdsGuildBased()
 } else if (mode === '--deploy-cmds-global') {
     // TODO
 } else if (mode === '--login') {
-    DjsToolsClient.clientLogin()
+    modePromise = DjsTools.clientLogin()
 } else {
-    console.error('Please pass a mode: --deploy-cmds-guild or --deploy-cmds-global or --login.')
+    throw new Error('Please pass a mode for the second argument: --deploy-cmds-guild or --deploy-cmds-global or --login.')
 }
+
+modePromise.then(() => {}).catch(() => {})

@@ -29,10 +29,13 @@ export default function addCmdCaller(client: Djs.Client) {
 
         try {
             await cmdBundle.execute(interaction)
-        } catch (error) {
+        } catch (error: unknown) {
             console.error(error)
 
-            const messageContent = 'There was an error while executing this command!'
+            const userDisplay = error instanceof Error ? error.name : typeof error
+
+
+            const messageContent = `There was an error while executing this command! ${Djs.inlineCode(userDisplay)}`
             if (interaction.replied || interaction.deferred) {
                 await interaction.followUp(messageContent)
             } else {
