@@ -1,8 +1,15 @@
 {
+  "root": true,
   "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
   "plugins": ["@typescript-eslint"],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+
   "rules": {
     "semi": ["error", "never"],
-    "quotes": [2, "single"]
+    "quotes": [2, "single"],
+    "@typescript-eslint/no-floating-promises": ["error"]
   }
 }
