@@ -10,6 +10,6 @@ export const cmdHello: DjsTools.CmdBundle = {
     },
 
     execute: async (interaction) => {
-        await interaction.followUp('Hellooo! :D')
+        await interaction.reply('Hellooo! :D')
     }
 }
