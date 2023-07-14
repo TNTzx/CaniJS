@@ -29,11 +29,6 @@ export class ClientExtend extends Djs.Client {
     constructor(options: Djs.ClientOptions) {
         super(options)
         this.commands = new Djs.Collection()
-        this.loadCommands()
-    }
-
-    loadCommands() {
-
     }
 }
 
@@ -114,6 +109,8 @@ export async function deployCmdsGuildBased() {
         })
 
 		console.log(`Successfully refreshed ${commandCount} slash commands.`)
+
+        client.destroy()
 	} catch (error) {
 		console.error(error)
 	}
