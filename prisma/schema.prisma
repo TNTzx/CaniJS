@@ -1,14 +1,20 @@
 datasource db {
-	provider = "postgresql"
-	url      = env("prisma_db_url")
+    provider = "postgresql"
+    url      = env("prisma_db_url")
 }
 
 generator client {
-	provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
-
-
 model Guild {
-	guild_discid String @id 
+    guildSid    String       @id
+    permissions Permissions?
+}
+
+model Permissions {
+    guildSid String @id
+    guild    Guild  @relation(fields: [guildSid], references: [guildSid])
+
+    adminSid String @unique
 }

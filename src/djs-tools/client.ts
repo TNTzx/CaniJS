@@ -2,6 +2,7 @@ import Djs from 'discord.js'
 import env from 'dotenv'
 
 import * as CmdRegister from './cmd_register'
+import CmdCaller from  './cmd_caller'
 
 
 
@@ -51,34 +52,9 @@ export function clientLogin() {
         console.log(`Logged in as ${clientPass.user.tag}, ID ${clientPass.user.id}.`)
     })
 
-    client.on(Djs.Events.InteractionCreate, async (interaction) => {
-        if (!interaction.isChatInputCommand()) return
+    CmdCaller(client)
 
-        const command = CmdRegister.getRegisteredCmds().get(interaction.commandName)
-
-        if (command === undefined) {
-            interaction.reply(`\`${interaction.commandName}\` is not a command.`)
-            return
-        }
-
-        try {
-            command.execute(interaction)
-        } catch (error) {
-            console.error(error)
-
-            let messageContent: Djs.InteractionReplyOptions = {
-                content: 'There was an error while executing this command!',
-                ephemeral: true
-            }
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp(messageContent)
-            } else {
-                await interaction.reply(messageContent)
-            }
-        }
-    })
-
-    console.log('Logging into client for deploying slash commands (guild based)...')
+    console.log('Logging into client for running...')
     client.login(getBotToken())
 }
 
@@ -87,8 +63,8 @@ export async function deployCmdsGuildBased() {
     const restApi = new Djs.REST()
     restApi.setToken(getBotToken())
 
-    const cmdInfos = CmdRegister.getRegisteredCmds()
-    const commandCount = cmdInfos.size
+    const cmdBundles = CmdRegister.getRegisteredCmds()
+    const commandCount = cmdBundles.size
 
     const client = getClient()
 
@@ -96,7 +72,7 @@ export async function deployCmdsGuildBased() {
     await client.login(getBotToken())
 
 
-    const commandDatas = cmdInfos.map((cmdInfo) => cmdInfo.data.toJSON())
+    const commandDatas = cmdBundles.map((cmdBundle) => CmdRegister.cmdInfoToSlashCommandBuilder(cmdBundle.cmdInfo).toJSON())
 
     try {
 		console.log(`Refreshing ${commandCount} slash commands...`)

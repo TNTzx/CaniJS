@@ -1,20 +1,36 @@
 import Djs from 'discord.js'
 
+import * as CmdPermissions from './permissions'
 
 
-export type CmdInfo = {
-    data: Djs.SlashCommandBuilder,
-    execute: (interaction: any) => Promise<void>
+
+export interface CmdInfo {
+    name: string,
+    description: string,
+    permissions?: CmdPermissions.CmdPermission[]
 }
 
-const registeredCmds: Djs.Collection<string, CmdInfo> = new Djs.Collection()
-export function addCmd(cmdInfo: CmdInfo) {
-    registeredCmds.set(cmdInfo.data.name, cmdInfo)
-    return cmdInfo
+export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
+    return new Djs.SlashCommandBuilder()
+        .setName(cmdInfo.name)
+        .setDescription(cmdInfo.description)
 }
-export function addAllCmds(cmdInfos: CmdInfo[]) {
-    cmdInfos.forEach((cmdInfo) => {
-        addCmd(cmdInfo)
+
+
+export interface CmdBundle {
+    cmdInfo: CmdInfo
+    execute: (interaction: Djs.CommandInteraction) => Promise<void>
+}
+
+
+const registeredCmds: Djs.Collection<string, CmdBundle> = new Djs.Collection()
+export function addCmd(cmdBundle: CmdBundle) {
+    registeredCmds.set(cmdBundle.cmdInfo.name, cmdBundle)
+    return cmdBundle
+}
+export function addAllCmds(cmdBundles: CmdBundle[]) {
+    cmdBundles.forEach((cmdBundle) => {
+        addCmd(cmdBundle)
     })
 }
 export function getRegisteredCmds() {
