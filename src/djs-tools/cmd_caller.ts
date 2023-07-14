@@ -28,19 +28,15 @@ export default function addCmdCaller(client: Djs.Client) {
 
 
         try {
-            await interaction.reply('Executing command...')
             await cmdBundle.execute(interaction)
         } catch (error) {
             console.error(error)
 
-            const messageContent: Djs.InteractionReplyOptions = {
-                content: 'There was an error while executing this command!',
-                ephemeral: true
-            }
+            const messageContent = 'There was an error while executing this command!'
             if (interaction.replied || interaction.deferred) {
                 await interaction.followUp(messageContent)
             } else {
-                await interaction.reply(messageContent)
+                await interaction.channel?.send(messageContent)
             }
         }
     })
