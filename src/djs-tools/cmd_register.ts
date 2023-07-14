@@ -11,7 +11,7 @@ export interface CmdInfo {
 }
 
 export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
-    return new Djs.SlashCommandBuilder()
+    return (new Djs.SlashCommandBuilder())
         .setName(cmdInfo.name)
         .setDescription(cmdInfo.description)
 }

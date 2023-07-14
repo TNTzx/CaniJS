@@ -14,18 +14,16 @@ DjsTools.setClient(new Djs.Client({
     ]
 }))
 
-DjsTools.addAllCmds(CommandImport())
-
 
 const mode = process.argv[2]
-let modePromise: Promise<void> = (async () => {})()
+let modePromise: () => Promise<void> = async () => {}
 
 if (mode === '--deploy-cmds-guild') {
-    modePromise = DjsTools.deployCmdsGuildBased()
+    modePromise = DjsTools.deployCmdsGuildBased
 } else if (mode === '--deploy-cmds-global') {
     // TODO
 } else if (mode === '--login') {
-    modePromise = DjsTools.clientLogin()
+    modePromise = DjsTools.clientLogin
 } else {
     throw new Error('Please pass a mode for the second argument: --deploy-cmds-guild or --deploy-cmds-global or --login.')
 }
@@ -40,5 +38,9 @@ if (environment === '--dev') {
     throw new Error('Please pass a mode for the third argument: --dev or --prod.')
 }
 
+
 DjsTools.sayDevEnvStatus()
-modePromise.then(() => {}).catch(() => {})
+
+
+DjsTools.addAllCmds(CommandImport())
+modePromise().then(() => {}).catch(() => {})
