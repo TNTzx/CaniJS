@@ -93,3 +93,7 @@ export function setDevEnvStatus(isDevEnv: boolean) {
 export function getDevEnvStatus() {
     return devEnvStatus
 }
+
+export function sayDevEnvStatus() {
+    console.log(`Currently in ${devEnvStatus ? 'development' : 'production'} environment.`)
+}

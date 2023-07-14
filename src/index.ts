@@ -40,5 +40,5 @@ if (environment === '--dev') {
     throw new Error('Please pass a mode for the third argument: --dev or --prod.')
 }
 
-
+DjsTools.sayDevEnvStatus()
 modePromise.then(() => {}).catch(() => {})
