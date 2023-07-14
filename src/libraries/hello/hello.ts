@@ -1,9 +1,9 @@
 import { SlashCommandBuilder } from 'discord.js'
-import * as DjsToolsCmdReg from '../../djs-tools/cmd_register'
+import * as DjsTools from '../../djs-tools'
 
 
 
-let cmdHello: DjsToolsCmdReg.CmdInfo = {
+let cmdHello: DjsTools.CmdReg.CmdInfo = {
     data: new SlashCommandBuilder()
         .setName('hello')
         .setDescription('Says hello! Dog!'),
