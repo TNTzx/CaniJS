@@ -16,18 +16,8 @@ DjsTools.setClient(new Djs.Client({
 
 DjsTools.addAllCmds(commands)
 
+
 const mode = process.argv[2]
-const environment = process.argv[3]
-
-if (environment === '--dev') {
-    DjsTools.setDevEnvStatus(true)
-} else if (environment === '--prod') {
-    DjsTools.setDevEnvStatus(false)
-} else {
-    throw new Error('Please pass a mode for the third argument: --dev or --deploy-cmds-global or --prod.')
-}
-
-
 let modePromise: Promise<void> = (async () => {})()
 
 if (mode === '--deploy-cmds-guild') {
@@ -39,5 +29,16 @@ if (mode === '--deploy-cmds-guild') {
 } else {
     throw new Error('Please pass a mode for the second argument: --deploy-cmds-guild or --deploy-cmds-global or --login.')
 }
+
+
+const environment = process.argv[3]
+if (environment === '--dev') {
+    DjsTools.setDevEnvStatus(true)
+} else if (environment === '--prod') {
+    DjsTools.setDevEnvStatus(false)
+} else {
+    throw new Error('Please pass a mode for the third argument: --dev or --prod.')
+}
+
 
 modePromise.then(() => {}).catch(() => {})
