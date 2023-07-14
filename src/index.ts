@@ -1,7 +1,7 @@
 import Djs from 'discord.js'
 import * as DjsTools from './djs-tools'
 
-import commands from './libraries/command_import'
+import CommandImport from './libraries/command_import'
 
 
 
@@ -14,7 +14,7 @@ DjsTools.setClient(new Djs.Client({
     ]
 }))
 
-DjsTools.addAllCmds(commands)
+DjsTools.addAllCmds(CommandImport())
 
 
 const mode = process.argv[2]

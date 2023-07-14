@@ -2,6 +2,8 @@ import * as DjsTools from '../djs-tools'
 
 import * as Hello from './hello/hello'
 
+import Test from './test/test'
+
 
 
 let commandList = [
@@ -17,4 +19,10 @@ if (DjsTools.getDevEnvStatus()) {
 }
 
 
-export default commandList
+export default () => {
+    if (DjsTools.getDevEnvStatus()) {
+        return commandList.concat(Test)
+    }
+
+    return commandList
+}
