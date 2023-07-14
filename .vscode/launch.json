@@ -7,7 +7,7 @@
 		{
             "type": "node",
             "request": "launch",
-            "name": "Launch",
+            "name": "Login",
             "skipFiles": [
                 "<node_internals>/**"
             ],
@@ -16,6 +16,47 @@
                 "-r", "ts-node/register",
                 "-r", "tsconfig-paths/register"
             ],
+            "args": ["--login"],
+            "console": "integratedTerminal",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js",
+                "!**/node_modules/**"
+            ]
+        },
+
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Deploy Commands Guild",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/src/index.ts",
+            "runtimeArgs": [
+                "-r", "ts-node/register",
+                "-r", "tsconfig-paths/register"
+            ],
+            "args": ["--deploy-cmds-guild"],
+            "console": "integratedTerminal",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js",
+                "!**/node_modules/**"
+            ]
+        },
+
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Deploy Commands Global",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/src/index.ts",
+            "runtimeArgs": [
+                "-r", "ts-node/register",
+                "-r", "tsconfig-paths/register"
+            ],
+            "args": ["--deploy-cmds-global"],
             "console": "integratedTerminal",
             "outFiles": [
                 "${workspaceFolder}/**/*.js",
