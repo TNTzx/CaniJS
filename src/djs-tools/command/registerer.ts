@@ -7,20 +7,19 @@ import * as CmdPermissions from "../permissions"
 export class CmdParameter {
     public name: string
     public description: string
-    public autocomplete: boolean
     public required: boolean
+    // TODO choices
+    // TODO validation
 
     constructor(
-        {name, description, autocomplete = false, required = true}: {
+        {name, description, required = true}: {
             name: string,
             description: string,
-            autocomplete?: boolean,
             required?: boolean
         }
     ) {
         this.name = name
         this.description = description
-        this.autocomplete = autocomplete
         this.required = required
     }
 
@@ -31,7 +30,27 @@ export class CmdParameter {
 
 }
 
-export class CmdParamString extends CmdParameter {}
+export class CmdParamString extends CmdParameter {
+}
+export class CmdParamInteger extends CmdParameter {
+}
+export class CmdParamNumber extends CmdParameter {
+}
+export class CmdParamBoolean extends CmdParameter {
+}
+
+export class CmdParamMentionable extends CmdParameter {
+}
+export class CmdParamChannel extends CmdParameter {
+}
+export class CmdParamRole extends CmdParameter {
+}
+export class CmdParamUser extends CmdParameter {
+}
+
+export class CmdParamAttachment extends CmdParameter {
+}
+
 
 
 export class CmdInfo {
@@ -60,14 +79,41 @@ export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
         .setName(cmdInfo.name)
         .setDescription(cmdInfo.description)
 
+
+    function getSetupOptionFunc<T extends Djs.ApplicationCommandOptionBase>(parameter: CmdParameter) {
+        return (option: T) => option
+            .setName(parameter.name)
+            .setDescription(parameter.description)
+            .setRequired(parameter.required)
+    }
+
     for (const parameter of cmdInfo.parameters) {
         if (parameter instanceof CmdParamString) {
-            scb.addStringOption(option =>
-                option.setName(parameter.name)
-                    .setDescription(parameter.description)
-                    .setAutocomplete(parameter.autocomplete)
-                    .setRequired(parameter.required)
-            )
+            scb.addStringOption(getSetupOptionFunc<Djs.SlashCommandStringOption>(parameter))
+        } 
+        else if (parameter instanceof CmdParamInteger) {
+            scb.addIntegerOption(getSetupOptionFunc<Djs.SlashCommandIntegerOption>(parameter))
+        } 
+        else if (parameter instanceof CmdParamNumber) {
+            scb.addNumberOption(getSetupOptionFunc<Djs.SlashCommandNumberOption>(parameter))
+        } 
+        else if (parameter instanceof CmdParamBoolean) {
+            scb.addBooleanOption(getSetupOptionFunc<Djs.SlashCommandBooleanOption>(parameter))
+        } 
+        else if (parameter instanceof CmdParamMentionable) {
+            scb.addMentionableOption(getSetupOptionFunc<Djs.SlashCommandMentionableOption>(parameter))
+        } 
+        else if (parameter instanceof CmdParamChannel) {
+            scb.addChannelOption(getSetupOptionFunc<Djs.SlashCommandChannelOption>(parameter))
+        } 
+        else if (parameter instanceof CmdParamRole) {
+            scb.addRoleOption(getSetupOptionFunc<Djs.SlashCommandRoleOption>(parameter))
+        } 
+        else if (parameter instanceof CmdParamUser) {
+            scb.addUserOption(getSetupOptionFunc<Djs.SlashCommandUserOption>(parameter))
+        } 
+        else if (parameter instanceof CmdParamAttachment) {
+            scb.addAttachmentOption(getSetupOptionFunc<Djs.SlashCommandAttachmentOption>(parameter))
         }
     }
 
