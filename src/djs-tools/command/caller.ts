@@ -1,10 +1,10 @@
 import Djs from "discord.js"
 
-import * as CmdRegister from "./cmd_register"
+import * as CmdRegister from "./registerer"
 
 
 
-export default function addCmdCaller(client: Djs.Client) {
+export function addCmdCaller(client: Djs.Client) {
     client.on(Djs.Events.InteractionCreate, async (interaction) => {
         if (!interaction.isChatInputCommand()) return
 

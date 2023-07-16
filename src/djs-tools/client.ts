@@ -1,8 +1,7 @@
 import Djs from "discord.js"
 import env from "dotenv"
 
-import * as CmdRegister from "./cmd_register"
-import CmdCaller from  "./cmd_caller"
+import * as DjsToolsCmds from "./command"
 
 
 
@@ -44,7 +43,7 @@ export async function clientLogin() {
         console.log(`Logged in as ${clientPass.user.tag}, ID ${clientPass.user.id}.`)
     })
 
-    CmdCaller(client)
+    DjsToolsCmds.addCmdCaller(client)
 
     console.log("Logging into client for running...")
     await client.login(getBotToken())
@@ -55,7 +54,7 @@ export async function deployCmdsGuildBased() {
     const restApi = new Djs.REST()
     restApi.setToken(getBotToken())
 
-    const cmdBundles = CmdRegister.getRegisteredCmds()
+    const cmdBundles = DjsToolsCmds.getRegisteredCmds()
     const commandCount = cmdBundles.size
 
     const client = getClient()
@@ -64,12 +63,12 @@ export async function deployCmdsGuildBased() {
     await client.login(getBotToken())
 
 
-    const commandDatas = cmdBundles.map((cmdBundle) => CmdRegister.cmdInfoToSlashCommandBuilder(cmdBundle.cmdInfo).toJSON())
+    const commandDatas = cmdBundles.map((cmdBundle) => DjsToolsCmds.cmdInfoToSlashCommandBuilder(cmdBundle.cmdInfo).toJSON())
 
     try {
 		console.log(`Refreshing ${commandCount} slash commands:`)
         for (const cmdName of cmdBundles.keys())
-            console.log(cmdName)
+            console.log(`- ${cmdName}`)
 
         for (const guild of client.guilds.cache.values()) {
             await restApi.put(

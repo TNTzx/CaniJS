@@ -1,6 +1,6 @@
 import Djs from "discord.js"
 
-import * as CmdPermissions from "./permissions"
+import * as CmdPermissions from "../permissions"
 
 
 
@@ -11,7 +11,7 @@ export class CmdParameter {
     public required: boolean
 
     constructor(
-        {name, description, autocomplete = false, required = false}: {
+        {name, description, autocomplete = false, required = true}: {
             name: string,
             description: string,
             autocomplete?: boolean,
