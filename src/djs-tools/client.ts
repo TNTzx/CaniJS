@@ -67,14 +67,16 @@ export async function deployCmdsGuildBased() {
     const commandDatas = cmdBundles.map((cmdBundle) => CmdRegister.cmdInfoToSlashCommandBuilder(cmdBundle.cmdInfo).toJSON())
 
     try {
-		console.log(`Refreshing ${commandCount} slash commands...`)
+		console.log(`Refreshing ${commandCount} slash commands:`)
+        for (const cmdName of cmdBundles.keys())
+            console.log(cmdName)
 
-        client.guilds.cache.forEach(async (guild) => {
+        for (const guild of client.guilds.cache.values()) {
             await restApi.put(
                 Djs.Routes.applicationGuildCommands(getAppId(), guild.id),
                 { body: commandDatas },
             )
-        })
+        }
 
 		console.log(`Successfully refreshed ${commandCount} slash commands.`)
 

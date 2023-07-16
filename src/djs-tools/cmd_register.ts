@@ -44,8 +44,8 @@ export class CmdInfo {
         {name, description, permissions = [], parameters = []}: {
             name: string
             description: string
-            permissions: CmdPermissions.CmdPermission[]
-            parameters: CmdParameter[]
+            permissions?: CmdPermissions.CmdPermission[]
+            parameters?: CmdParameter[]
         }
     ) {
         this.name = name
