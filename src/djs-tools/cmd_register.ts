@@ -5,16 +5,28 @@ import * as CmdPermissions from "./permissions"
 
 
 export class CmdParameter {
-    name: string
-    description: string
-    autocomplete: boolean
-    required: boolean
+    public name: string
+    public description: string
+    public autocomplete: boolean
+    public required: boolean
 
-    constructor(name: string, description: string, autocomplete: boolean = false, required: boolean = true) {
+    constructor(
+        {name, description, autocomplete = false, required = false}: {
+            name: string,
+            description: string,
+            autocomplete?: boolean,
+            required?: boolean
+        }
+    ) {
         this.name = name
         this.description = description
         this.autocomplete = autocomplete
         this.required = required
+    }
+
+
+    public toGetterArgs(): [string, boolean] {
+        return [this.name, this.required]
     }
 
 }
@@ -22,11 +34,25 @@ export class CmdParameter {
 export class CmdParamString extends CmdParameter {}
 
 
-export interface CmdInfo {
-    name: string,
-    description: string,
-    permissions?: CmdPermissions.CmdPermission[],
-    parameters?: CmdParameter[]
+export class CmdInfo {
+    public name: string
+    public description: string
+    public permissions: CmdPermissions.CmdPermission[]
+    public parameters: CmdParameter[]
+
+    constructor(
+        {name, description, permissions = [], parameters = []}: {
+            name: string
+            description: string
+            permissions: CmdPermissions.CmdPermission[]
+            parameters: CmdParameter[]
+        }
+    ) {
+        this.name = name
+        this.description = description
+        this.permissions = permissions
+        this.parameters = parameters
+    }
 }
 
 export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
@@ -34,15 +60,14 @@ export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
         .setName(cmdInfo.name)
         .setDescription(cmdInfo.description)
 
-    if (cmdInfo.parameters !== undefined) {
-        for (const parameter of cmdInfo.parameters) {
-            if (parameter instanceof CmdParamString)
-                scb.addStringOption(option =>
-                    option.setName(parameter.name)
-                        .setDescription(parameter.description)
-                        .setAutocomplete(parameter.autocomplete)
-                        .setRequired(parameter.required)
-                )
+    for (const parameter of cmdInfo.parameters) {
+        if (parameter instanceof CmdParamString) {
+            scb.addStringOption(option =>
+                option.setName(parameter.name)
+                    .setDescription(parameter.description)
+                    .setAutocomplete(parameter.autocomplete)
+                    .setRequired(parameter.required)
+            )
         }
     }
 
@@ -51,9 +76,11 @@ export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
 
 
 
-export interface CmdBundle {
-    cmdInfo: CmdInfo
-    execute: (interaction: Djs.CommandInteraction) => Promise<void>
+export class CmdBundle {
+    constructor(
+        public cmdInfo: CmdInfo,
+        public execute: (interaction: Djs.ChatInputCommandInteraction) => Promise<void>)
+    {}
 }
 
 
