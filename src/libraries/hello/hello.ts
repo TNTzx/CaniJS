@@ -1,15 +1,15 @@
-import * as DjsTools from '../../djs-tools'
+import * as DjsTools from "../../djs-tools"
 
 
 
 export const cmdHello: DjsTools.CmdBundle = {
     cmdInfo: {
-        name: 'hello',
-        description: 'Says hello! Dog!',
+        name: "hello",
+        description: "Says hello! Dog!",
         permissions: [DjsTools.permServerOwner]
     },
 
     execute: async (interaction) => {
-        await interaction.reply('Hellooo! :D')
+        await interaction.reply("Hellooo! :D")
     }
 }

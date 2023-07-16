@@ -1,15 +1,15 @@
-import Djs from 'discord.js'
-import env from 'dotenv'
+import Djs from "discord.js"
+import env from "dotenv"
 
-import * as CmdRegister from './cmd_register'
-import CmdCaller from  './cmd_caller'
+import * as CmdRegister from "./cmd_register"
+import CmdCaller from  "./cmd_caller"
 
 
 
 env.config()
 
 function validateKeyFromEnv(keyFromEnv: string | undefined) {
-    if (keyFromEnv === undefined) throw 'No token defined.'
+    if (keyFromEnv === undefined) throw "No token defined."
     return keyFromEnv
 }
 
@@ -32,7 +32,7 @@ export function setClient(client: Djs.Client) {
 }
 
 export function getClient() {
-    if (globalClient === null) throw 'No client found.'
+    if (globalClient === null) throw "No client found."
     return globalClient
 }
 
@@ -46,7 +46,7 @@ export async function clientLogin() {
 
     CmdCaller(client)
 
-    console.log('Logging into client for running...')
+    console.log("Logging into client for running...")
     await client.login(getBotToken())
 }
 
@@ -60,7 +60,7 @@ export async function deployCmdsGuildBased() {
 
     const client = getClient()
 
-    console.log('Logging into client for deploying slash commands (guild based)...')
+    console.log("Logging into client for deploying slash commands (guild based)...")
     await client.login(getBotToken())
 
 
@@ -95,5 +95,5 @@ export function getDevEnvStatus() {
 }
 
 export function sayDevEnvStatus() {
-    console.log(`Currently in ${devEnvStatus ? 'development' : 'production'} environment.`)
+    console.log(`Currently in ${devEnvStatus ? "development" : "production"} environment.`)
 }

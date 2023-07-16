@@ -1,7 +1,7 @@
-import Djs from 'discord.js'
-import * as DjsTools from './djs-tools'
+import Djs from "discord.js"
+import * as DjsTools from "./djs-tools"
 
-import CommandImport from './libraries/command_import'
+import CommandImport from "./libraries/command_import"
 
 
 
@@ -18,24 +18,24 @@ DjsTools.setClient(new Djs.Client({
 const mode = process.argv[2]
 let modePromise: () => Promise<void> = async () => {}
 
-if (mode === '--deploy-cmds-guild') {
+if (mode === "--deploy-cmds-guild") {
     modePromise = DjsTools.deployCmdsGuildBased
-} else if (mode === '--deploy-cmds-global') {
+} else if (mode === "--deploy-cmds-global") {
     // TODO
-} else if (mode === '--login') {
+} else if (mode === "--login") {
     modePromise = DjsTools.clientLogin
 } else {
-    throw new Error('Please pass a mode for the second argument: --deploy-cmds-guild or --deploy-cmds-global or --login.')
+    throw new Error("Please pass a mode for the second argument: --deploy-cmds-guild or --deploy-cmds-global or --login.")
 }
 
 
 const environment = process.argv[3]
-if (environment === '--dev') {
+if (environment === "--dev") {
     DjsTools.setDevEnvStatus(true)
-} else if (environment === '--prod') {
+} else if (environment === "--prod") {
     DjsTools.setDevEnvStatus(false)
 } else {
-    throw new Error('Please pass a mode for the third argument: --dev or --prod.')
+    throw new Error("Please pass a mode for the third argument: --dev or --prod.")
 }
 
 

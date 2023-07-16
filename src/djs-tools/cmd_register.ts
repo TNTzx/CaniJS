@@ -1,20 +1,54 @@
-import Djs from 'discord.js'
+import Djs from "discord.js"
 
-import * as CmdPermissions from './permissions'
+import * as CmdPermissions from "./permissions"
 
+
+
+export class CmdParameter {
+    name: string
+    description: string
+    autocomplete: boolean
+    required: boolean
+
+    constructor(name: string, description: string, autocomplete: boolean = false, required: boolean = true) {
+        this.name = name
+        this.description = description
+        this.autocomplete = autocomplete
+        this.required = required
+    }
+
+}
+
+export class CmdParamString extends CmdParameter {}
 
 
 export interface CmdInfo {
     name: string,
     description: string,
-    permissions?: CmdPermissions.CmdPermission[]
+    permissions?: CmdPermissions.CmdPermission[],
+    parameters?: CmdParameter[]
 }
 
 export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
-    return (new Djs.SlashCommandBuilder())
+    const scb = (new Djs.SlashCommandBuilder())
         .setName(cmdInfo.name)
         .setDescription(cmdInfo.description)
+
+    if (cmdInfo.parameters !== undefined) {
+        for (const parameter of cmdInfo.parameters) {
+            if (parameter instanceof CmdParamString)
+                scb.addStringOption(option =>
+                    option.setName(parameter.name)
+                        .setDescription(parameter.description)
+                        .setAutocomplete(parameter.autocomplete)
+                        .setRequired(parameter.required)
+                )
+        }
+    }
+
+    return scb
 }
+
 
 
 export interface CmdBundle {

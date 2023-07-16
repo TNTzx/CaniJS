@@ -1,6 +1,6 @@
-import Djs from 'discord.js'
+import Djs from "discord.js"
 
-import * as CmdRegister from './cmd_register'
+import * as CmdRegister from "./cmd_register"
 
 
 

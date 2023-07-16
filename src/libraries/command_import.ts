@@ -1,8 +1,8 @@
-import * as DjsTools from '../djs-tools'
+import * as DjsTools from "../djs-tools"
 
-import * as Hello from './hello/hello'
+import * as Hello from "./hello/hello"
 
-import Test from './test/test'
+import Test from "./test/test"
 
 
 
@@ -12,7 +12,7 @@ let commandList = [
 
 
 if (DjsTools.getDevEnvStatus()) {
-    import('./test/test').then((Test) => {
+    import("./test/test").then((Test) => {
         const commandListTests = Test.default
         commandList = commandList.concat(commandListTests)
     }).catch(() => {})
