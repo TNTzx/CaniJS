@@ -1,70 +1,24 @@
 import Djs from "discord.js"
 
 import * as CmdPermissions from "../permissions"
+import * as ParamParser from "./param_parser"
 
 
 
-export class CmdParameter {
-    public name: string
-    public description: string
-    public required: boolean
-    // TODO choices
-    // TODO validation
-
-    constructor(
-        {name, description, required = true}: {
-            name: string,
-            description: string,
-            required?: boolean
-        }
-    ) {
-        this.name = name
-        this.description = description
-        this.required = required
-    }
-
-
-    public toGetterArgs(): [string, boolean] {
-        return [this.name, this.required]
-    }
-
-}
-
-export class CmdParamString extends CmdParameter {
-}
-export class CmdParamInteger extends CmdParameter {
-}
-export class CmdParamNumber extends CmdParameter {
-}
-export class CmdParamBoolean extends CmdParameter {
-}
-
-export class CmdParamMentionable extends CmdParameter {
-}
-export class CmdParamChannel extends CmdParameter {
-}
-export class CmdParamRole extends CmdParameter {
-}
-export class CmdParamUser extends CmdParameter {
-}
-
-export class CmdParamAttachment extends CmdParameter {
-}
-
-
+type ParamStorage = readonly ParamParser.CmdParameter<boolean, ParamParser.ChoiceArrayGeneral>[]
 
 export class CmdInfo {
     public name: string
     public description: string
     public permissions: CmdPermissions.CmdPermission[]
-    public parameters: CmdParameter[]
+    public parameters: ParamStorage
 
     constructor(
         {name, description, permissions = [], parameters = []}: {
             name: string
             description: string
             permissions?: CmdPermissions.CmdPermission[]
-            parameters?: CmdParameter[]
+            parameters?: ParamStorage
         }
     ) {
         this.name = name
@@ -80,39 +34,47 @@ export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
         .setDescription(cmdInfo.description)
 
 
-    function getSetupOptionFunc<T extends Djs.ApplicationCommandOptionBase>(parameter: CmdParameter) {
-        return (option: T) => option
+    function getSetupOptionFunc<T extends Djs.ApplicationCommandOptionBase>(parameter: ParamParser.CmdParameter) {
+        return (option: T) => {
+            option
             .setName(parameter.name)
             .setDescription(parameter.description)
             .setRequired(parameter.required)
+
+            if (parameter.choices !== undefined)
+                (parameter as unknown as T extends Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<infer R> ? Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<R> : never)
+                .addChoices(parameter.choices)
+
+            return option
+        }
     }
 
     for (const parameter of cmdInfo.parameters) {
-        if (parameter instanceof CmdParamString) {
+        if (parameter instanceof ParamParser.CmdParamString) {
             scb.addStringOption(getSetupOptionFunc<Djs.SlashCommandStringOption>(parameter))
         } 
-        else if (parameter instanceof CmdParamInteger) {
+        else if (parameter instanceof ParamParser.CmdParamInteger) {
             scb.addIntegerOption(getSetupOptionFunc<Djs.SlashCommandIntegerOption>(parameter))
         } 
-        else if (parameter instanceof CmdParamNumber) {
+        else if (parameter instanceof ParamParser.CmdParamNumber) {
             scb.addNumberOption(getSetupOptionFunc<Djs.SlashCommandNumberOption>(parameter))
         } 
-        else if (parameter instanceof CmdParamBoolean) {
+        else if (parameter instanceof ParamParser.CmdParamBoolean) {
             scb.addBooleanOption(getSetupOptionFunc<Djs.SlashCommandBooleanOption>(parameter))
         } 
-        else if (parameter instanceof CmdParamMentionable) {
+        else if (parameter instanceof ParamParser.CmdParamMentionable) {
             scb.addMentionableOption(getSetupOptionFunc<Djs.SlashCommandMentionableOption>(parameter))
         } 
-        else if (parameter instanceof CmdParamChannel) {
+        else if (parameter instanceof ParamParser.CmdParamChannel) {
             scb.addChannelOption(getSetupOptionFunc<Djs.SlashCommandChannelOption>(parameter))
         } 
-        else if (parameter instanceof CmdParamRole) {
+        else if (parameter instanceof ParamParser.CmdParamRole) {
             scb.addRoleOption(getSetupOptionFunc<Djs.SlashCommandRoleOption>(parameter))
         } 
-        else if (parameter instanceof CmdParamUser) {
+        else if (parameter instanceof ParamParser.CmdParamUser) {
             scb.addUserOption(getSetupOptionFunc<Djs.SlashCommandUserOption>(parameter))
         } 
-        else if (parameter instanceof CmdParamAttachment) {
+        else if (parameter instanceof ParamParser.CmdParamAttachment) {
             scb.addAttachmentOption(getSetupOptionFunc<Djs.SlashCommandAttachmentOption>(parameter))
         }
     }

@@ -43,4 +43,4 @@ DjsTools.sayDevEnvStatus()
 
 
 DjsTools.addAllCmds(CommandImport())
-modePromise().then(() => {}).catch(() => {})
+modePromise().then().catch((reason: string) => {throw new Error(reason)})
