@@ -42,7 +42,7 @@ export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
             .setRequired(parameter.required)
 
             if (parameter.choices !== undefined)
-                (option as T extends Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<infer R> ? Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<R> : never)
+                (option as unknown as T extends Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<infer R> ? Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<R> : never)
                 .addChoices(parameter.choices)
 
             return option
