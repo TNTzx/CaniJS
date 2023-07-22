@@ -44,6 +44,7 @@ export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
             if (parameter.choices !== undefined)
                 (option as unknown as T extends Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<infer R> ? Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<R> : never)
                 .addChoices(parameter.choices)
+                // TODO use {name: , value: }
 
             return option
         }
