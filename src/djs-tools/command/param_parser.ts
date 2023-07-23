@@ -2,10 +2,11 @@ import Djs from "discord.js"
 
 
 
-export type ChoiceArrayGeneral = readonly unknown[] | undefined
+export type ChoiceOption<T> = {name: string, value: T}
+export type ChoiceArrayGeneral<T> = readonly ChoiceOption<T>[] | undefined
 
 
-export class CmdParameter<IsRequired extends boolean = boolean, ChoiceArray extends ChoiceArrayGeneral = undefined> {
+export class CmdParameter<IsRequired extends boolean = boolean, ChoiceArray extends ChoiceArrayGeneral<unknown> = undefined> {
     public required: IsRequired
     public name: string
     public description: string
@@ -35,7 +36,7 @@ export class CmdParameter<IsRequired extends boolean = boolean, ChoiceArray exte
 
 export class CmdParamString<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral
+    ChoiceArray extends ChoiceArrayGeneral<unknown>
 > extends CmdParameter<IsRequired, ChoiceArray> {
     private __nominalString() {}
 }
@@ -43,21 +44,21 @@ export class CmdParamString<
 
 export class CmdParamInteger<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral
+    ChoiceArray extends ChoiceArrayGeneral<unknown>
 > extends CmdParameter<IsRequired, ChoiceArray> {
     private __nominalInt() {}
 }
 
 export class CmdParamNumber<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral
+    ChoiceArray extends ChoiceArrayGeneral<unknown>
 > extends CmdParameter<IsRequired, ChoiceArray> {
     private __nominalNumber() {}
 }
 
 export class CmdParamBoolean<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral
+    ChoiceArray extends ChoiceArrayGeneral<unknown>
 > extends CmdParameter<IsRequired, ChoiceArray> {
     private __nominalBoolean() {}
 }
@@ -65,28 +66,28 @@ export class CmdParamBoolean<
 
 export class CmdParamMentionable<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral
+    ChoiceArray extends ChoiceArrayGeneral<unknown>
 > extends CmdParameter<IsRequired, ChoiceArray> {
     private __nominalMentionable() {}
 }
 
 export class CmdParamChannel<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral
+    ChoiceArray extends ChoiceArrayGeneral<unknown>
 > extends CmdParameter<IsRequired, ChoiceArray> {
     private __nominalChannel() {}
 }
 
 export class CmdParamRole<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral
+    ChoiceArray extends ChoiceArrayGeneral<unknown>
 > extends CmdParameter<IsRequired, ChoiceArray> {
     private __nominalRole() {}
 }
 
 export class CmdParamUser<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral
+    ChoiceArray extends ChoiceArrayGeneral<unknown>
 > extends CmdParameter<IsRequired, ChoiceArray> {
     private __nominalUser() {}
 }
@@ -94,7 +95,7 @@ export class CmdParamUser<
 
 export class CmdParamAttachment<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral
+    ChoiceArray extends ChoiceArrayGeneral<unknown>
 > extends CmdParameter<IsRequired, ChoiceArray> {
     private __nominalAttachment() {}
 }
@@ -112,7 +113,7 @@ export enum ParamEnum {
     attachment
 }
 
-export type CmdParamEnumMap<ParamEnumT extends ParamEnum, IsRequired extends boolean, ChoicesT extends ChoiceArrayGeneral> = (
+export type CmdParamEnumMap<ParamEnumT extends ParamEnum, IsRequired extends boolean, ChoicesT extends ChoiceArrayGeneral<unknown>> = (
     ParamEnumT extends ParamEnum.string ? CmdParamString<IsRequired, ChoicesT>
     : ParamEnumT extends ParamEnum.integer ? CmdParamInteger<IsRequired, ChoicesT>
     : ParamEnumT extends ParamEnum.number ? CmdParamNumber<IsRequired, ChoicesT>
@@ -126,9 +127,9 @@ export type CmdParamEnumMap<ParamEnumT extends ParamEnum, IsRequired extends boo
 
 
 export type ParamToChoiceMap<ParamTypeEnum extends ParamEnum> = (
-    ParamTypeEnum extends ParamEnum.string ? readonly string[]
-    : ParamTypeEnum extends ParamEnum.integer ? readonly number[]
-    : ParamTypeEnum extends ParamEnum.number ? readonly number[]
+    ParamTypeEnum extends ParamEnum.string ? readonly ChoiceOption<string>[]
+    : ParamTypeEnum extends ParamEnum.integer ? readonly ChoiceOption<number>[]
+    : ParamTypeEnum extends ParamEnum.number ? readonly ChoiceOption<number>[]
     : undefined
 )
 
@@ -177,7 +178,7 @@ export type ParamResult = (
 )
 
 
-export type ParamToResultMap<T extends CmdParameter<boolean, ChoiceArrayGeneral>> =
+export type ParamToResultMap<T extends CmdParameter<boolean, ChoiceArrayGeneral<unknown>>> =
     T extends CmdParameter<infer IsRequired, infer ChoiceArray> ? (
         ChoiceArray extends undefined ? (
             T extends CmdParamString<IsRequired, ChoiceArray> ? string | null
@@ -193,16 +194,18 @@ export type ParamToResultMap<T extends CmdParameter<boolean, ChoiceArrayGeneral>
             : T extends CmdParamRole<IsRequired, ChoiceArray> ? Djs.Role | Djs.APIRole | null
             : T extends CmdParamUser<IsRequired, ChoiceArray> ? Djs.User | null
             : Djs.Attachment | null
-        ) : NonNullable<ChoiceArray>[number] | null
+        ) : {
+            [Choice in keyof NonNullable<ChoiceArray>]: NonNullable<ChoiceArray>[Choice] extends ChoiceOption<infer R> ? R : never
+        }[number]
     ) : never
 
-export type ParamToNullMap<T extends CmdParameter<boolean, ChoiceArrayGeneral>> = 
-    T extends CmdParameter<infer IsRequired> ? (
+export type ParamToNullMap<T extends CmdParameter<boolean, ChoiceArrayGeneral<unknown>>> = 
+    T extends CmdParameter<infer IsRequired, ChoiceArrayGeneral<unknown>> ? (
         IsRequired extends true ? NonNullable<ParamToResultMap<T>> : ParamToResultMap<T>
     ) : never
 
 
-export type ParamsMap<T extends readonly CmdParameter<boolean, ChoiceArrayGeneral>[]> = {
+export type ParamsMap<T extends readonly CmdParameter<boolean, ChoiceArrayGeneral<unknown>>[]> = {
     [P in keyof T]: ParamToNullMap<T[P]>
 }
 
@@ -210,7 +213,7 @@ export type ParamsMap<T extends readonly CmdParameter<boolean, ChoiceArrayGenera
 
 
 export function getParameterValues<
-    Parameters extends readonly CmdParameter<boolean, ChoiceArrayGeneral>[],
+    Parameters extends readonly CmdParameter<boolean, ChoiceArrayGeneral<unknown>>[],
 >(
     interaction: Djs.ChatInputCommandInteraction,
     parameters: Parameters,

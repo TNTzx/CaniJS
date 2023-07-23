@@ -6,7 +6,7 @@ const cmdTestParams = [
     DjsTools.createParameter(
         DjsTools.ParamEnum.string, true,
         "test", "Very long description!!!",
-        ["wa", "wawa"] as const
+        [{name: "Wa", value: "wa"}, {name: "New", value: "newester"}] as const
     )
 ] as const
 export const cmdTest = new DjsTools.CmdBundle(

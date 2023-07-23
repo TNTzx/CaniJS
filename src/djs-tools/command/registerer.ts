@@ -5,7 +5,7 @@ import * as ParamParser from "./param_parser"
 
 
 
-type ParamStorage = readonly ParamParser.CmdParameter<boolean, ParamParser.ChoiceArrayGeneral>[]
+type ParamStorage = readonly ParamParser.CmdParameter<boolean, ParamParser.ChoiceArrayGeneral<unknown>>[]
 
 export class CmdInfo {
     public name: string
@@ -44,7 +44,6 @@ export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
             if (parameter.choices !== undefined)
                 (option as unknown as T extends Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<infer R> ? Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<R> : never)
                 .addChoices(parameter.choices)
-                // TODO use {name: , value: }
 
             return option
         }
