@@ -6,8 +6,15 @@ const cmdTestParams = [
     DjsTools.createParameter(
         DjsTools.ParamEnum.string, true,
         "test", "Very long description!!!",
-        [{name: "Wa", value: "wa"}, {name: "New", value: "newester"}] as const
-    )
+    ).setLengthLimits(2, 10),
+    DjsTools.createParameter(
+        DjsTools.ParamEnum.integer, true,
+        "test2", "WAWA"
+    ).setSizeLimits(1, 10),
+    DjsTools.createParameter(
+        DjsTools.ParamEnum.number, true,
+        "test3", "WAWA"
+    ).setSizeLimits(10, 20)
 ] as const
 export const cmdTest = new DjsTools.CmdBundle(
     new DjsTools.CmdInfo({

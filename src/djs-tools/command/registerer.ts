@@ -34,7 +34,7 @@ export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
         .setDescription(cmdInfo.description)
 
 
-    function getSetupOptionFunc<T extends Djs.ApplicationCommandOptionBase>(parameter: ParamParser.CmdParameter) {
+    function getSetupOptionFunc<T extends Djs.ApplicationCommandOptionBase>(parameter: ParamParser.CmdParameter<boolean, ParamParser.ChoiceArrayGeneral<string | number | undefined>>) {
         return (option: T) => {
             option
             .setName(parameter.name)
@@ -43,7 +43,22 @@ export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
 
             if (parameter.choices !== undefined)
                 (option as unknown as T extends Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<infer R> ? Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<R> : never)
-                .addChoices(parameter.choices)
+                .addChoices(...(parameter.choices as NonNullable<ParamParser.ChoiceArrayGeneral<string | number>>))
+
+            if (parameter instanceof ParamParser.CmdParamString) {
+                (option as unknown as Djs.SlashCommandStringOption)
+                    .setMaxLength(parameter.max_chars)
+                    .setMinLength(parameter.min_chars)
+            } else if (parameter instanceof ParamParser.CmdParamInteger || parameter instanceof ParamParser.CmdParamNumber) {
+                if (parameter.max_value !== undefined) {
+                    (option as unknown as Djs.ApplicationCommandNumericOptionMinMaxValueMixin)
+                        .setMaxValue(parameter.max_value)
+                }
+                if (parameter.min_value !== undefined) {
+                    (option as unknown as Djs.ApplicationCommandNumericOptionMinMaxValueMixin)
+                        .setMinValue(parameter.min_value)
+                }
+            }
 
             return option
         }
@@ -52,28 +67,28 @@ export function cmdInfoToSlashCommandBuilder(cmdInfo: CmdInfo) {
     for (const parameter of cmdInfo.parameters) {
         if (parameter instanceof ParamParser.CmdParamString) {
             scb.addStringOption(getSetupOptionFunc<Djs.SlashCommandStringOption>(parameter))
-        } 
+        }
         else if (parameter instanceof ParamParser.CmdParamInteger) {
             scb.addIntegerOption(getSetupOptionFunc<Djs.SlashCommandIntegerOption>(parameter))
-        } 
+        }
         else if (parameter instanceof ParamParser.CmdParamNumber) {
             scb.addNumberOption(getSetupOptionFunc<Djs.SlashCommandNumberOption>(parameter))
-        } 
+        }
         else if (parameter instanceof ParamParser.CmdParamBoolean) {
             scb.addBooleanOption(getSetupOptionFunc<Djs.SlashCommandBooleanOption>(parameter))
-        } 
+        }
         else if (parameter instanceof ParamParser.CmdParamMentionable) {
             scb.addMentionableOption(getSetupOptionFunc<Djs.SlashCommandMentionableOption>(parameter))
-        } 
+        }
         else if (parameter instanceof ParamParser.CmdParamChannel) {
             scb.addChannelOption(getSetupOptionFunc<Djs.SlashCommandChannelOption>(parameter))
-        } 
+        }
         else if (parameter instanceof ParamParser.CmdParamRole) {
             scb.addRoleOption(getSetupOptionFunc<Djs.SlashCommandRoleOption>(parameter))
-        } 
+        }
         else if (parameter instanceof ParamParser.CmdParamUser) {
             scb.addUserOption(getSetupOptionFunc<Djs.SlashCommandUserOption>(parameter))
-        } 
+        }
         else if (parameter instanceof ParamParser.CmdParamAttachment) {
             scb.addAttachmentOption(getSetupOptionFunc<Djs.SlashCommandAttachmentOption>(parameter))
         }
@@ -105,7 +120,3 @@ export function addAllCmds(cmdBundles: CmdBundle[]) {
 export function getRegisteredCmds() {
     return registeredCmds
 }
-
-
-
-

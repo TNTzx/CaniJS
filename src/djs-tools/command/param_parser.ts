@@ -39,21 +39,54 @@ export class CmdParamString<
     ChoiceArray extends ChoiceArrayGeneral<unknown>
 > extends CmdParameter<IsRequired, ChoiceArray> {
     private __nominalString() {}
+
+    public min_chars: number = 1
+    public max_chars: number = 2000
+
+    public setLengthLimits(min?: number, max?: number) {
+        this.min_chars = min ?? this.min_chars
+        this.max_chars = max ?? this.max_chars
+        return this
+    }
 }
 
+
+interface ParamNumeric {
+    min_value: number | undefined
+    max_value: number | undefined
+    setSizeLimits: (min?: number, max?: number) => this
+}
 
 export class CmdParamInteger<
     IsRequired extends boolean,
     ChoiceArray extends ChoiceArrayGeneral<unknown>
-> extends CmdParameter<IsRequired, ChoiceArray> {
+> extends CmdParameter<IsRequired, ChoiceArray> implements ParamNumeric {
     private __nominalInt() {}
+
+    public min_value: number | undefined = undefined
+    public max_value: number | undefined = undefined
+
+    public setSizeLimits(min?: number, max?: number) {
+        this.min_value = min
+        this.max_value = max
+        return this
+    }
 }
 
 export class CmdParamNumber<
     IsRequired extends boolean,
     ChoiceArray extends ChoiceArrayGeneral<unknown>
-> extends CmdParameter<IsRequired, ChoiceArray> {
+> extends CmdParameter<IsRequired, ChoiceArray> implements ParamNumeric {
     private __nominalNumber() {}
+
+    public min_value: number | undefined = undefined
+    public max_value: number | undefined = undefined
+
+    public setSizeLimits(min?: number, max?: number) {
+        this.min_value = min
+        this.max_value = max
+        return this
+    }
 }
 
 export class CmdParamBoolean<
