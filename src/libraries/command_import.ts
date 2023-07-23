@@ -1,13 +1,13 @@
 import * as DjsTools from "../djs-tools"
 
-import * as Hello from "./hello/hello"
+// import * as Hello from "./hello/hello"
 
 import Test from "./test/test"
 
 
 
-let commandList = [
-    Hello.cmdHello
+let commandList: DjsTools.CmdInfoAll[] = [
+    // Hello.cmdHello
 ]
 
 

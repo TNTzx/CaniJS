@@ -1,3 +1,4 @@
+import * as Djs from "discord.js"
 import * as DjsTools from "../../djs-tools"
 
 
@@ -16,21 +17,50 @@ const cmdTestParams = [
         "test3", "WAWA"
     ).setSizeLimits(10, 20)
 ] as const
-export const cmdTest = new DjsTools.CmdBundle(
-    new DjsTools.CmdInfo({
-        name: "test",
-        description: "Test command!",
-        permissions: [DjsTools.permServerOwner],
-        parameters: cmdTestParams
-    }),
+export const cmdTest = new DjsTools.CmdNormalInfo({
+    name: "test",
+    description: "Test command!",
+    permissions: [DjsTools.permServerOwner],
+    parameters: cmdTestParams,
 
-    async (interaction) => {
+    executeFunc: async (interaction) => {
         const parameters = DjsTools.getParameterValues(interaction, cmdTestParams)
         await interaction.reply(parameters[0])
         await interaction.followUp((parameters[0] === "wa").toString())
     }
-)
+})
+
+async function commandTest(interaction: Djs.ChatInputCommandInteraction) {
+    await interaction.deferReply()
+    await interaction.editReply("test success")
+}
+
+export const cmdTestSubUnderGroup = new DjsTools.CmdSubInfo({
+    name: "subundergroup",
+    description: "Subcommand under the group.",
+    executeFunc: commandTest
+})
+export const cmdTestSubGroup = new DjsTools.CmdSubGroupInfo({
+    name: "group",
+    description: "Group.",
+    cmdSubInfos: [cmdTestSubUnderGroup]
+})
+export const cmdTestSub = new DjsTools.CmdSubInfo({
+    name: "sub",
+    description: "Subcommand.",
+    executeFunc: commandTest
+})
+export const cmdTestParent = new DjsTools.CmdParentInfo({
+    name: "subundergroup",
+    description: "Subcommand under the group.",
+    cmdSubGroupInfos: [cmdTestSubGroup],
+    cmdSubInfos: [cmdTestSub]
+})
 
 export default [
-    cmdTest
+    cmdTest,
+    cmdTestSubUnderGroup,
+    cmdTestSubGroup,
+    cmdTestSub,
+    cmdTestParent
 ]
