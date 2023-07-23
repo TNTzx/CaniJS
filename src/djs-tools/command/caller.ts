@@ -60,7 +60,7 @@ export function addCmdCaller(client: Djs.Client) {
             cmdFunctionalInfo = cmdWithEntry
             permissions = cmdWithEntry.permissions
         } else {
-            await interaction.reply(`\`${interaction.commandName}\` is not a command.`)
+            await interaction.editReply(`\`${interaction.commandName}\` is not a command.`)
             return
         }
 
@@ -68,7 +68,7 @@ export function addCmdCaller(client: Djs.Client) {
         if (permissions !== undefined) {
             for (const cmdPerm of permissions) {
                 if (!cmdPerm.checkGrant(interaction)) {
-                    await interaction.reply(`You do not have the permission to use this command! ${cmdPerm.onRejectMessage}`)
+                    await interaction.editReply(`You do not have the permission to use this command! ${cmdPerm.onRejectMessage}`)
                     return
                 }
             }

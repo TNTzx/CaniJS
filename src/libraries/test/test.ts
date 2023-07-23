@@ -6,7 +6,7 @@ const aPerm: DjsTools.CmdPermission = {
     name: "Has 'a' in nicknname",
     onRejectMessage: "You don't have an 'a' in your nickname!",
     checkGrant: (interaction) => {
-        return interaction.user?.username.includes("a")
+        return (interaction.member as Djs.GuildMember).displayName.includes("a")
     }
 }
 
@@ -14,7 +14,7 @@ const bPerm: DjsTools.CmdPermission = {
     name: "Has 'b' in nicknname",
     onRejectMessage: "You don't have a 'b' in your nickname!",
     checkGrant: (interaction) => {
-        return interaction.user?.username.includes("b")
+        return (interaction.member as Djs.GuildMember).displayName.includes("b")
     }
 }
 
@@ -22,7 +22,7 @@ const cPerm: DjsTools.CmdPermission = {
     name: "Has 'c' in nicknname",
     onRejectMessage: "You don't have a 'c' in your nickname!",
     checkGrant: (interaction) => {
-        return interaction.user?.username.includes("c")
+        return (interaction.member as Djs.GuildMember).displayName.includes("c")
     }
 }
 

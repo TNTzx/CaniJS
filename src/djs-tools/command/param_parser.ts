@@ -11,7 +11,6 @@ export class CmdParameter<IsRequired extends boolean = boolean, ChoiceArray exte
     public name: string
     public description: string
     public choices: ChoiceArray
-    // TODO validation
 
     constructor(
         required: IsRequired,
