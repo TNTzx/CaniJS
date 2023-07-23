@@ -54,8 +54,8 @@ export async function deployCmdsGuildBased() {
     const restApi = new Djs.REST()
     restApi.setToken(getBotToken())
 
-    const cmdBundles = DjsToolsCmds.getRegisteredCmds()
-    const commandCount = cmdBundles.size
+    const cmdInfos = DjsToolsCmds.getRegisteredCmds()
+    const commandCount = cmdInfos.size
 
     const client = getClient()
 
@@ -63,11 +63,11 @@ export async function deployCmdsGuildBased() {
     await client.login(getBotToken())
 
 
-    const commandDatas = cmdBundles.map((cmdBundle) => DjsToolsCmds.cmdInfoToSlashCommandBuilder(cmdBundle.cmdInfo).toJSON())
+    const commandDatas = cmdInfos.map((cmdInfo) => cmdInfo.createBuilder().toJSON())
 
     try {
 		console.log(`Refreshing ${commandCount} slash commands:`)
-        for (const cmdName of cmdBundles.keys())
+        for (const cmdName of cmdInfos.keys())
             console.log(`- ${cmdName}`)
 
         for (const guild of client.guilds.cache.values()) {

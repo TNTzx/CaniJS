@@ -102,7 +102,12 @@ export class CmdFunctionalInfo<Builder extends Djs.SlashCommandBuilder | Djs.Sla
     }
 }
 
-export class CmdNormalInfo extends CmdFunctionalInfo<Djs.SlashCommandBuilder> {
+
+interface HasEntry {
+    createBuilder: () => Djs.SlashCommandBuilder
+}
+
+export class CmdNormalInfo extends CmdFunctionalInfo<Djs.SlashCommandBuilder> implements HasEntry {
     public createBuilder(): Djs.SlashCommandBuilder {
         return this.setupBuilder(new Djs.SlashCommandBuilder())
     }
@@ -112,19 +117,20 @@ export class CmdSubInfo extends CmdFunctionalInfo<Djs.SlashCommandSubcommandBuil
 }
 
 
-export class CmdFunctionalInfoCollection<
-    CmdInfoType extends CmdFunctionalInfo<Djs.SlashCommandBuilder | Djs.SlashCommandSubcommandBuilder>
+export class CmdSubsCollection<
+    CmdInfoType extends CmdSubInfo | CmdSubGroupInfo
 > {
     private collection: Djs.Collection<string, CmdInfoType>
 
-    constructor(readonly cmdFunctionalInfos: CmdInfoType[]) {
+    constructor(readonly cmdInfos: CmdInfoType[]) {
         this.collection = new Djs.Collection()
-        for (const cmdFunctionalInfo of cmdFunctionalInfos) {
-            this.collection.set(cmdFunctionalInfo.name, cmdFunctionalInfo)
+        for (const cmdInfo of cmdInfos) {
+            this.collection.set(cmdInfo.name, cmdInfo)
         }
     }
 
-    public getFromName(name: string) {
+    public getFromName(name: string | null) {
+        if (name === null) return undefined
         return this.collection.get(name)
     }
 }
@@ -132,18 +138,24 @@ export class CmdFunctionalInfoCollection<
 export class CmdSubGroupInfo {
     public name: string
     public description: string
-    public cmdSubInfos: CmdSubInfo[]
+    public cmdSubInfoColl: CmdSubsCollection<CmdSubInfo>
+    public cmdSubGroupInfoColl: CmdSubsCollection<CmdSubGroupInfo>
+    public permissions: CmdPermissions.CmdPermission[]
 
     constructor(
-        {name, description, cmdSubInfos}: {
+        {name, description, cmdSubInfos, cmdSubGroupInfos = [], permissions = []}: {
             name: string,
             description: string,
             cmdSubInfos: CmdSubInfo[]
+            cmdSubGroupInfos?: CmdSubGroupInfo[],
+            permissions?: CmdPermissions.CmdPermission[]
         }
     ) {
         this.name = name
         this.description = description
-        this.cmdSubInfos = cmdSubInfos
+        this.cmdSubInfoColl = new CmdSubsCollection(cmdSubInfos)
+        this.cmdSubGroupInfoColl = new CmdSubsCollection(cmdSubGroupInfos)
+        this.permissions = permissions
     }
 
 
@@ -152,7 +164,7 @@ export class CmdSubGroupInfo {
             .setName(this.name)
             .setDescription(this.description)
 
-        for (const cmdSubInfos of this.cmdSubInfos) {
+        for (const cmdSubInfos of this.cmdSubInfoColl.cmdInfos) {
             builder.addSubcommand(cmdSubInfos.setupBuilder.bind(cmdSubInfos))
         }
 
@@ -160,24 +172,27 @@ export class CmdSubGroupInfo {
     }
 }
 
-export class CmdParentInfo {
+export class CmdParentInfo implements HasEntry {
     public name: string
     public description: string
-    public cmdSubInfos: CmdSubInfo[]
-    public cmdSubGroupInfos: CmdSubGroupInfo[]
+    public cmdSubInfoColl: CmdSubsCollection<CmdSubInfo>
+    public cmdSubGroupInfoColl: CmdSubsCollection<CmdSubGroupInfo>
+    public permissions: CmdPermissions.CmdPermission[]
 
     constructor(
-        {name, description, cmdSubInfos = [], cmdSubGroupInfos = []}: {
+        {name, description, cmdSubInfos = [], cmdSubGroupInfos = [], permissions = []}: {
             name: string
             description: string
             cmdSubInfos?: CmdSubInfo[]
-            cmdSubGroupInfos?: CmdSubGroupInfo[]
+            cmdSubGroupInfos?: CmdSubGroupInfo[],
+            permissions?: CmdPermissions.CmdPermission[]
         }
     ) {
         this.name = name
         this.description = description
-        this.cmdSubInfos = cmdSubInfos
-        this.cmdSubGroupInfos = cmdSubGroupInfos
+        this.cmdSubInfoColl = new CmdSubsCollection(cmdSubInfos)
+        this.cmdSubGroupInfoColl = new CmdSubsCollection(cmdSubGroupInfos)
+        this.permissions = permissions
     }
 
     public createBuilder() {
@@ -185,13 +200,15 @@ export class CmdParentInfo {
             .setName(this.name)
             .setDescription(this.description)
 
-        for (const cmdSubInfo of this.cmdSubInfos) {
+        for (const cmdSubInfo of this.cmdSubInfoColl.cmdInfos) {
             builder.addSubcommand(cmdSubInfo.setupBuilder.bind(cmdSubInfo))
         }
 
-        for (const cmdSubGroupInfo of this.cmdSubGroupInfos) {
+        for (const cmdSubGroupInfo of this.cmdSubGroupInfoColl.cmdInfos) {
             builder.addSubcommandGroup(cmdSubGroupInfo.setupBuilder.bind(cmdSubGroupInfo))
         }
+
+        return builder
     }
 }
 

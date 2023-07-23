@@ -6,7 +6,7 @@ import Test from "./test/test"
 
 
 
-let commandList: DjsTools.CmdInfoAll[] = [
+let commandList: DjsTools.CmdWithEntry[] = [
     // Hello.cmdHello
 ]
 
