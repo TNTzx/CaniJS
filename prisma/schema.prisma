@@ -8,13 +8,16 @@ generator client {
 }
 
 model Guild {
-    guildSid    String       @id
-    permissions Permissions?
+    guildSid String @id
+
+    permissions   Permissions @relation(fields: [permissionsId], references: [id], onDelete: Cascade)
+    permissionsId Int         @unique
 }
 
 model Permissions {
-    guildSid String @id
-    guild    Guild  @relation(fields: [guildSid], references: [guildSid])
+    id       Int     @id @default(autoincrement())
+    guild    Guild?  @relation
+    guildSid String? @unique
 
     adminSid String? @unique
 }

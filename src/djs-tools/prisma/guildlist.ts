@@ -6,7 +6,10 @@ import * as PrismaClient from "./client"
 
 export async function addGuildToDB(guildSid: string) {
     return await PrismaClient.getPrismaClient().guild.create({
-        data: {guildSid: guildSid}
+        data: {
+            guildSid: guildSid,
+            permissions: {create: {}}
+        }
     })
 }
 
@@ -17,25 +20,30 @@ export async function deleteGuildFromDB(guildSid: string) {
 }
 
 export async function updateGuildsDB(botGuildSids: string[]) {
-    const prismaGuildEntries = await PrismaClient.getPrismaClient().guild.findMany()
+    const prismaClient = PrismaClient.getPrismaClient()
+
+
+    const prismaGuildEntries = await prismaClient.guild.findMany()
     const prismaGuildSids = prismaGuildEntries.map(prismaGuildEntry => prismaGuildEntry.guildSid)
 
     const toAddGuildSids = botGuildSids.filter(botGuildSid => !prismaGuildSids.includes(botGuildSid))
+
     const createdEntries = toAddGuildSids.length !== 0
-        ? await PrismaClient.getPrismaClient().guild.createMany(
-            ...(toAddGuildSids.map(toAddGuildSid => {
-                return {data: {guildSid: toAddGuildSid}}
-            }))
-        )
+        ? await prismaClient.$transaction(toAddGuildSids.map(
+            toAddGuildSid => prismaClient.guild.create({data: {
+                guildSid: toAddGuildSid,
+                permissions: {create: {}}
+            }})
+        ))
         : null
 
     const toDeleteGuildSids = prismaGuildSids.filter(prismaGuildSid => !botGuildSids.includes(prismaGuildSid))
     const deletedEntries = toDeleteGuildSids.length !== 0 
-        ? await PrismaClient.getPrismaClient().guild.deleteMany(
-            ...(toDeleteGuildSids.map(toDeleteGuildSid => {
-                return {where: {guildSid: toDeleteGuildSid}}
-            }))
-        )
+        ? await prismaClient.$transaction(toAddGuildSids.map(
+            toAddGuildSid => prismaClient.guild.delete({where: {
+                guildSid: toAddGuildSid
+            }})
+        ))
         : null
 
     return {createdEntries: createdEntries, deletedEntries: deletedEntries}
