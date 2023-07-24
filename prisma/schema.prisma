@@ -16,5 +16,5 @@ model Permissions {
     guildSid String @id
     guild    Guild  @relation(fields: [guildSid], references: [guildSid])
 
-    adminSid String @unique
+    adminSid String? @unique
 }

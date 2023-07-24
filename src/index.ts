@@ -41,6 +41,16 @@ if (environment === "--dev") {
 
 DjsTools.sayDevEnvStatus()
 
-
 DjsTools.addAllCmds(CommandImport())
-modePromise().then().catch((reason: string) => {throw new Error(reason)})
+
+
+const prismaClient = DjsTools.getPrismaClient()
+
+modePromise().then(
+    async () => {prismaClient.$disconnect()}
+).catch(
+    (reason: unknown) => {
+        prismaClient.$disconnect()
+        throw reason
+    }
+)
