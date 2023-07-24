@@ -37,7 +37,6 @@ export async function updateGuildsDB(botGuildSids: string[]) {
     const prismaGuildSids = prismaGuildEntries.map(prismaGuildEntry => prismaGuildEntry.guildSid)
 
     const toAddGuildSids = botGuildSids.filter(botGuildSid => !prismaGuildSids.includes(botGuildSid))
-
     const createdEntries = toAddGuildSids.length !== 0
         ? await prismaClient.$transaction(toAddGuildSids.map(
             toAddGuildSid => prismaClient.guild.create({data: getGuildCreateData(toAddGuildSid)})
