@@ -1,21 +1,31 @@
 import Djs from "discord.js"
+import { Prisma } from "@prisma/client"
 
 import * as PrismaClient from "./client"
 
 
 
+export function getGuildCreateData(guildSid: string): Prisma.GuildCreateInput {
+    return {
+        guildSid: guildSid,
+        permissions: {create: {}}
+    }
+}
+
+export function getGuildWhereUnique(guildSid: string): Prisma.GuildWhereUniqueInput {
+    return {guildSid: guildSid}
+}
+
+
 export async function addGuildToDB(guildSid: string) {
     return await PrismaClient.getPrismaClient().guild.create({
-        data: {
-            guildSid: guildSid,
-            permissions: {create: {}}
-        }
+        data: getGuildCreateData(guildSid)
     })
 }
 
 export async function deleteGuildFromDB(guildSid: string) {
     return await PrismaClient.getPrismaClient().guild.delete({
-        where: {guildSid: guildSid}
+        where: getGuildWhereUnique(guildSid)
     })
 }
 
@@ -30,19 +40,14 @@ export async function updateGuildsDB(botGuildSids: string[]) {
 
     const createdEntries = toAddGuildSids.length !== 0
         ? await prismaClient.$transaction(toAddGuildSids.map(
-            toAddGuildSid => prismaClient.guild.create({data: {
-                guildSid: toAddGuildSid,
-                permissions: {create: {}}
-            }})
+            toAddGuildSid => prismaClient.guild.create({data: getGuildCreateData(toAddGuildSid)})
         ))
         : null
 
     const toDeleteGuildSids = prismaGuildSids.filter(prismaGuildSid => !botGuildSids.includes(prismaGuildSid))
-    const deletedEntries = toDeleteGuildSids.length !== 0 
-        ? await prismaClient.$transaction(toAddGuildSids.map(
-            toAddGuildSid => prismaClient.guild.delete({where: {
-                guildSid: toAddGuildSid
-            }})
+    const deletedEntries = toDeleteGuildSids.length !== 0
+        ? await prismaClient.$transaction(toDeleteGuildSids.map(
+            toDeleteGuildSid => prismaClient.guild.delete({where: getGuildWhereUnique(toDeleteGuildSid)})
         ))
         : null
 
