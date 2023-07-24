@@ -43,7 +43,8 @@ const cmdTestParams = [
     ).setSizeLimits(10, 20)
 ] as const
 export const cmdTest = new DjsTools.CmdNormalInfo({
-    name: "test",
+    commandName: "test",
+    genericName: "Test",
     description: "Test command!",
     permissions: [DjsTools.permServerOwner],
     parameters: cmdTestParams,
@@ -60,24 +61,28 @@ async function commandTest(interaction: Djs.ChatInputCommandInteraction) {
 }
 
 export const cmdTestSubUnderGroup = new DjsTools.CmdSubInfo({
-    name: "subundergroup",
+    commandName: "subundergroup",
+    genericName: "Subcommand Under Group",
     description: "Subcommand under the group.",
     permissions: [cPerm],
     executeFunc: commandTest
 })
 export const cmdTestSubGroup = new DjsTools.CmdSubGroupInfo({
-    name: "group",
+    commandName: "group",
+    genericName: "Group",
     description: "Group.",
     cmdSubInfos: [cmdTestSubUnderGroup],
     permissions: [bPerm]
 })
 export const cmdTestSub = new DjsTools.CmdSubInfo({
-    name: "sub",
+    commandName: "sub",
+    genericName: "Subcommand",
     description: "Subcommand.",
     executeFunc: commandTest
 })
 export const cmdTestParent = new DjsTools.CmdParentInfo({
-    name: "parent",
+    commandName: "parent",
+    genericName: "Parent",
     description: "Parent.",
     cmdSubGroupInfos: [cmdTestSubGroup],
     cmdSubInfos: [cmdTestSub],

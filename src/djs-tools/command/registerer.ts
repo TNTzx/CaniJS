@@ -9,22 +9,25 @@ type ParamStorage = readonly ParamParser.CmdParameter<boolean, ParamParser.Choic
 type ExecuteFunc = (interaction: Djs.ChatInputCommandInteraction) => Promise<void>
 
 export class CmdFunctionalInfo<Builder extends Djs.SlashCommandBuilder | Djs.SlashCommandSubcommandBuilder> {
-    public name: string
+    public commandName: string
+    public genericName: string
     public description: string
     public permissions: CmdPermissions.CmdPermission[]
     public parameters: ParamStorage
     public executeFunc: ExecuteFunc
 
     constructor(
-        {name, description, permissions = [], parameters = [], executeFunc}: {
-            name: string
+        {commandName, genericName, description, permissions = [], parameters = [], executeFunc}: {
+            commandName: string
+            genericName: string
             description: string
             permissions?: CmdPermissions.CmdPermission[]
-            parameters?: ParamStorage,
+            parameters?: ParamStorage
             executeFunc: ExecuteFunc
         }
     ) {
-        this.name = name
+        this.commandName = commandName
+        this.genericName = genericName
         this.description = description
         this.permissions = permissions
         this.parameters = parameters
@@ -34,7 +37,7 @@ export class CmdFunctionalInfo<Builder extends Djs.SlashCommandBuilder | Djs.Sla
 
     public setupBuilder(builder: Builder) {
         builder
-            .setName(this.name)
+            .setName(this.commandName)
             .setDescription(this.description)
 
 
@@ -125,7 +128,7 @@ export class CmdSubsCollection<
     constructor(readonly cmdInfos: CmdInfoType[]) {
         this.collection = new Djs.Collection()
         for (const cmdInfo of cmdInfos) {
-            this.collection.set(cmdInfo.name, cmdInfo)
+            this.collection.set(cmdInfo.commandName, cmdInfo)
         }
     }
 
@@ -136,22 +139,25 @@ export class CmdSubsCollection<
 }
 
 export class CmdSubGroupInfo {
-    public name: string
+    public commandName: string
+    public genericName: string
     public description: string
     public cmdSubInfoColl: CmdSubsCollection<CmdSubInfo>
     public cmdSubGroupInfoColl: CmdSubsCollection<CmdSubGroupInfo>
     public permissions: CmdPermissions.CmdPermission[]
 
     constructor(
-        {name, description, cmdSubInfos, cmdSubGroupInfos = [], permissions = []}: {
-            name: string,
+        {commandName, genericName, description, cmdSubInfos, cmdSubGroupInfos = [], permissions = []}: {
+            commandName: string,
+            genericName: string,
             description: string,
             cmdSubInfos: CmdSubInfo[]
             cmdSubGroupInfos?: CmdSubGroupInfo[],
             permissions?: CmdPermissions.CmdPermission[]
         }
     ) {
-        this.name = name
+        this.commandName = commandName
+        this.genericName = genericName
         this.description = description
         this.cmdSubInfoColl = new CmdSubsCollection(cmdSubInfos)
         this.cmdSubGroupInfoColl = new CmdSubsCollection(cmdSubGroupInfos)
@@ -161,7 +167,7 @@ export class CmdSubGroupInfo {
 
     public setupBuilder(builder: Djs.SlashCommandSubcommandGroupBuilder) {
         builder
-            .setName(this.name)
+            .setName(this.commandName)
             .setDescription(this.description)
 
         for (const cmdSubInfos of this.cmdSubInfoColl.cmdInfos) {
@@ -173,22 +179,25 @@ export class CmdSubGroupInfo {
 }
 
 export class CmdParentInfo implements HasEntry {
-    public name: string
+    public commandName: string
+    public genericName: string
     public description: string
     public cmdSubInfoColl: CmdSubsCollection<CmdSubInfo>
     public cmdSubGroupInfoColl: CmdSubsCollection<CmdSubGroupInfo>
     public permissions: CmdPermissions.CmdPermission[]
 
     constructor(
-        {name, description, cmdSubInfos = [], cmdSubGroupInfos = [], permissions = []}: {
-            name: string
+        {commandName, genericName, description, cmdSubInfos = [], cmdSubGroupInfos = [], permissions = []}: {
+            commandName: string
+            genericName: string
             description: string
             cmdSubInfos?: CmdSubInfo[]
             cmdSubGroupInfos?: CmdSubGroupInfo[],
             permissions?: CmdPermissions.CmdPermission[]
         }
     ) {
-        this.name = name
+        this.commandName = commandName
+        this.genericName = genericName
         this.description = description
         this.cmdSubInfoColl = new CmdSubsCollection(cmdSubInfos)
         this.cmdSubGroupInfoColl = new CmdSubsCollection(cmdSubGroupInfos)
@@ -197,7 +206,7 @@ export class CmdParentInfo implements HasEntry {
 
     public createBuilder() {
         const builder = new Djs.SlashCommandBuilder()
-            .setName(this.name)
+            .setName(this.commandName)
             .setDescription(this.description)
 
         for (const cmdSubInfo of this.cmdSubInfoColl.cmdInfos) {
@@ -221,7 +230,7 @@ export type CmdInfoAll = CmdNormalInfo | CmdSubInfo | CmdSubGroupInfo | CmdParen
 
 const registeredCmds: Djs.Collection<string, CmdWithEntry> = new Djs.Collection()
 export function addCmd(cmdWithEntry: CmdWithEntry) {
-    registeredCmds.set(cmdWithEntry.name, cmdWithEntry)
+    registeredCmds.set(cmdWithEntry.genericName, cmdWithEntry)
     return cmdWithEntry
 }
 export function addAllCmds(cmdsWithEntry: CmdWithEntry[]) {
