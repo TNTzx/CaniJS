@@ -1,4 +1,4 @@
-import * as DjsTools from "../djs-tools"
+import * as DjsTools from "djs-tools"
 
 // import * as Hello from "./hello/hello"
 

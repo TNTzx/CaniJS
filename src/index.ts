@@ -1,5 +1,5 @@
 import Djs from "discord.js"
-import * as DjsTools from "./djs-tools"
+import * as DjsTools from "djs-tools"
 
 import CommandImport from "./libraries/command_import"
 
