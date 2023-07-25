@@ -167,9 +167,7 @@ export class CmdSubInfo<
 
 
 export class CmdSubsCollection<
-    IsGuildUsable extends boolean,
-    IsDmsUsable extends boolean,
-    CmdInfoType extends CmdSubInfo<IsGuildUsable, IsDmsUsable> | CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>
+    CmdInfoType extends CmdSubInfo<boolean, boolean> | CmdSubGroupInfo<boolean, boolean>
 > {
     private collection: Djs.Collection<string, CmdInfoType>
 
@@ -193,8 +191,8 @@ export class CmdSubGroupInfo<
     public commandName: string
     public genericName: string
     public description: string
-    public cmdSubInfoColl: CmdSubsCollection<IsGuildUsable, IsDmsUsable, CmdSubInfo<IsGuildUsable, IsDmsUsable>>
-    public cmdSubGroupInfoColl: CmdSubsCollection<IsGuildUsable, IsDmsUsable, CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>>
+    public cmdSubInfoColl: CmdSubsCollection<CmdSubInfo<IsGuildUsable, IsDmsUsable>>
+    public cmdSubGroupInfoColl: CmdSubsCollection<CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>>
     public permissions: CmdPermissions.CmdPermission[]
 
     constructor(
@@ -236,8 +234,8 @@ export class CmdParentInfo<
     public commandName: string
     public genericName: string
     public description: string
-    public cmdSubInfoColl: CmdSubsCollection<IsGuildUsable, IsDmsUsable, CmdSubInfo<IsGuildUsable, IsDmsUsable>>
-    public cmdSubGroupInfoColl: CmdSubsCollection<IsGuildUsable, IsDmsUsable, CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>>
+    public cmdSubInfoColl: CmdSubsCollection<CmdSubInfo<IsGuildUsable, IsDmsUsable>>
+    public cmdSubGroupInfoColl: CmdSubsCollection<CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>>
     public isGuildUsable: IsGuildUsable
     public isDmsUsable: IsDmsUsable
     public permissions: CmdPermissions.CmdPermission[]
