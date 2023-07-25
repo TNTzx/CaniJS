@@ -5,9 +5,6 @@ import * as ParamParser from "./param_parser"
 
 
 
-type ParamStorage = readonly ParamParser.CmdParameter<boolean, ParamParser.ChoiceArrayGeneral<unknown>>[]
-
-
 export interface GuildCommandInteraction extends Djs.ChatInputCommandInteraction {
     guild: typeof Djs.CommandInteraction.prototype.guild
     guildId: typeof Djs.CommandInteraction.prototype.guildId
@@ -18,58 +15,66 @@ export interface DMCommandInteraction
     extends Omit<Djs.ChatInputCommandInteraction, "guild" | "guildId" | "channel">
 {}
 
-type UsabilityToInteractionMap<
-    IsGuildUsable extends boolean,
-    IsDmsUsable extends boolean
-> = (
-    IsGuildUsable extends true
-    ? (IsDmsUsable extends true ? Djs.ChatInputCommandInteraction : GuildCommandInteraction)
-    : (IsDmsUsable extends true ? DMCommandInteraction : never)
+
+export interface UseScope<IsGuildUsable extends boolean = boolean, IsDmsUsable extends boolean = boolean> {
+    isGuildUsable: IsGuildUsable
+    isDmsUsable: IsDmsUsable
+}
+
+export const useScopeAll: UseScope<true, true> = {isGuildUsable: true, isDmsUsable: true}
+export const useScopeGuildOnly: UseScope<true, false> = {isGuildUsable: true, isDmsUsable: false}
+export const useScopeDMsOnly: UseScope<false, true> = {isGuildUsable: false, isDmsUsable: true}
+
+type UseScopeToInteractionMap<UseScopeT extends UseScope<boolean, boolean>> = (
+    UseScopeT extends UseScope<true, true>
+    ? Djs.ChatInputCommandInteraction
+
+    : UseScopeT extends UseScope<true, false>
+    ? GuildCommandInteraction
+
+    : UseScopeT extends UseScope<false, true>
+    ? DMCommandInteraction
+
+    : Djs.ChatInputCommandInteraction | GuildCommandInteraction | DMCommandInteraction
 )
 
-type ExecuteFunc<
-    IsGuildUsable extends boolean,
-    IsDmsUsable extends boolean
-> = (interaction: UsabilityToInteractionMap<IsGuildUsable, IsDmsUsable>) => Promise<void>
+type ExecuteFunc<UseScopeT extends UseScope> = (interaction: UseScopeToInteractionMap<UseScopeT>) => Promise<void>
 
+
+type ParamStorage = readonly ParamParser.CmdParameter<boolean, ParamParser.ChoiceArrayGeneral<unknown>>[]
+
+
+interface CommandInfo {
+    commandName: string
+    genericName: string
+    description: string
+}
 
 
 export class CmdFunctionalInfo<
     Builder extends Djs.SlashCommandBuilder | Djs.SlashCommandSubcommandBuilder,
-    IsGuildUsable extends boolean,
-    IsDmsUsable extends boolean
+    UseScopeT extends UseScope
 > {
-    public commandName: string
-    public genericName: string
-    public description: string
+    public commandInfo: CommandInfo
     public parameters: ParamStorage
-    public isGuildUsable: IsGuildUsable
-    public isDmsUsable: IsDmsUsable
     public permissions: CmdPermissions.CmdPermission[]
-    public executeFunc: ExecuteFunc<IsGuildUsable, IsDmsUsable>
+    public executeFunc: ExecuteFunc<UseScopeT>
 
     constructor(
         {
-            commandName, genericName, description, parameters = [],
-            isGuildUsable, isDmsUsable, permissions = [],
+            commandInfo,
+            parameters = [],
+            permissions = [],
             executeFunc
         }: {
-            commandName: string
-            genericName: string
-            description: string
+            commandInfo: CommandInfo
             parameters?: ParamStorage
-            isGuildUsable: IsGuildUsable
-            isDmsUsable: IsDmsUsable
             permissions?: CmdPermissions.CmdPermission[]
-            executeFunc: ExecuteFunc<IsGuildUsable, IsDmsUsable>
+            executeFunc: ExecuteFunc<UseScopeT>
         }
     ) {
-        this.commandName = commandName
-        this.genericName = genericName
-        this.description = description
+        this.commandInfo = commandInfo
         this.parameters = parameters
-        this.isGuildUsable = isGuildUsable
-        this.isDmsUsable = isDmsUsable
         this.permissions = permissions
         this.executeFunc = executeFunc
     }
@@ -77,8 +82,8 @@ export class CmdFunctionalInfo<
 
     public setupBuilder(builder: Builder) {
         builder
-            .setName(this.commandName)
-            .setDescription(this.description)
+            .setName(this.commandInfo.commandName)
+            .setDescription(this.commandInfo.description)
 
 
         function getSetupOptionFunc<T extends Djs.ApplicationCommandOptionBase>(parameter: ParamParser.CmdParameter<boolean, ParamParser.ChoiceArrayGeneral<string | number | undefined>>) {
@@ -150,74 +155,122 @@ interface HasEntry {
     createBuilder: () => Djs.SlashCommandBuilder
 }
 
-export class CmdNormalInfo<
-    IsGuildUsable extends boolean,
-    IsDmsUsable extends boolean
-> extends CmdFunctionalInfo<Djs.SlashCommandBuilder, IsGuildUsable, IsDmsUsable> implements HasEntry {
+export class CmdNormalInfo<UseScopeT extends UseScope> extends CmdFunctionalInfo<Djs.SlashCommandBuilder, UseScopeT> implements HasEntry {
+    public useScope: UseScopeT
+
+    constructor(
+        {
+            commandInfo, parameters = [],
+            useScope, permissions = [],
+            executeFunc
+        }: {
+            commandInfo: CommandInfo
+            parameters?: ParamStorage
+            useScope: UseScopeT
+            permissions?: CmdPermissions.CmdPermission[]
+            executeFunc: ExecuteFunc<UseScopeT>
+        }
+    ) {
+        super({commandInfo, parameters, permissions, executeFunc})
+        this.useScope = useScope
+    }
     public createBuilder(): Djs.SlashCommandBuilder {
         return this.setupBuilder(new Djs.SlashCommandBuilder())
     }
 }
 
-export class CmdSubInfo<
-    IsGuildUsable extends boolean,
-    IsDmsUsable extends boolean
-> extends CmdFunctionalInfo<Djs.SlashCommandSubcommandBuilder, IsGuildUsable, IsDmsUsable> {
+
+
+
+
+interface Parent<UseScopeT extends UseScope = UseScope> {
+    useScope: UseScopeT
+}
+
+type inferParentUseScope<ParentT extends Parent> = ParentT extends Parent<infer UseScopeT> ? UseScopeT : never
+
+interface Child<ParentT extends Parent> {
+    useScope: inferParentUseScope<ParentT>
+    parent: ParentT
 }
 
 
-export class CmdSubsCollection<
-    CmdInfoType extends CmdSubInfo<boolean, boolean> | CmdSubGroupInfo<boolean, boolean>
+export class ChildContainer<
+    ChildT extends Child<Parent>
 > {
-    private collection: Djs.Collection<string, CmdInfoType>
+    private collection: Map<string, ChildT>
 
-    constructor(readonly cmdInfos: CmdInfoType[]) {
-        this.collection = new Djs.Collection()
-        for (const cmdInfo of cmdInfos) {
-            this.collection.set(cmdInfo.commandName, cmdInfo)
-        }
+    constructor() {
+        this.collection = new Map()
     }
 
     public getFromName(name: string | null) {
         if (name === null) return undefined
         return this.collection.get(name)
     }
+
+    public addItem(child: ChildT) {
+        this.collection.set(cmdInfo.commandName, cmdInfo)
+    }
 }
 
-export class CmdSubGroupInfo<
-    IsGuildUsable extends boolean,
-    IsDmsUsable extends boolean
-> {
-    public commandName: string
-    public genericName: string
-    public description: string
-    public cmdSubInfoColl: CmdSubsCollection<CmdSubInfo<IsGuildUsable, IsDmsUsable>>
-    public cmdSubGroupInfoColl: CmdSubsCollection<CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>>
+
+
+export class CmdSubInfo<ParentT extends Parent>
+    extends CmdFunctionalInfo<Djs.SlashCommandSubcommandBuilder, inferParentUseScope<ParentT>>
+    implements Child<ParentT>
+{
+    public useScope: inferParentUseScope<ParentT>
+    public parent: ParentT
+
+    constructor(
+        {
+            parent,
+            commandInfo,
+            parameters = [],
+            permissions = [],
+            executeFunc
+        }: {
+            parent: ParentT
+            commandInfo: CommandInfo
+            parameters?: ParamStorage
+            permissions?: CmdPermissions.CmdPermission[]
+            executeFunc: ExecuteFunc<inferParentUseScope<ParentT>>
+        }
+    ) {
+        super({commandInfo, parameters, permissions, executeFunc})
+        this.parent = parent
+        this.parent.addCmdSubInfo(this)
+    }
+}
+
+
+
+export class CmdSubGroupInfo<Parent extends ParentType<UseScopeT>, UseScopeT extends UseScope = inferParentUseScope<Parent>> extends SubContainer<UseScopeT> implements Child<Parent, UseScopeT> {
+    public parent: Parent
+    public commandInfo: CommandInfo
     public permissions: CmdPermissions.CmdPermission[]
 
     constructor(
-        {commandName, genericName, description, cmdSubInfos, cmdSubGroupInfos = [], permissions = []}: {
-            commandName: string,
-            genericName: string,
-            description: string,
-            cmdSubInfos: CmdSubInfo<IsGuildUsable, IsDmsUsable>[]
-            cmdSubGroupInfos?: CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>[],
+        {parent, commandInfo, permissions = []}: {
+            parent: Parent
+            commandInfo: CommandInfo
             permissions?: CmdPermissions.CmdPermission[]
         }
     ) {
-        this.commandName = commandName
-        this.genericName = genericName
-        this.description = description
-        this.cmdSubInfoColl = new CmdSubsCollection(cmdSubInfos)
-        this.cmdSubGroupInfoColl = new CmdSubsCollection(cmdSubGroupInfos)
+        super()
+        this.parent = parent
+        this.parent.addCmdSubGroupInfo(this)
+
+        this.commandInfo = commandInfo
         this.permissions = permissions
     }
 
 
     public setupBuilder(builder: Djs.SlashCommandSubcommandGroupBuilder) {
         builder
-            .setName(this.commandName)
-            .setDescription(this.description)
+            .setName(this.commandInfo.commandName)
+            .setDescription(this.commandInfo.description)
 
         for (const cmdSubInfos of this.cmdSubInfoColl.cmdInfos) {
             builder.addSubcommand(cmdSubInfos.setupBuilder.bind(cmdSubInfos))
@@ -227,48 +280,32 @@ export class CmdSubGroupInfo<
     }
 }
 
-export class CmdParentInfo<
-    IsGuildUsable extends boolean,
-    IsDmsUsable extends boolean
-> implements HasEntry {
-    public commandName: string
-    public genericName: string
-    public description: string
-    public cmdSubInfoColl: CmdSubsCollection<CmdSubInfo<IsGuildUsable, IsDmsUsable>>
-    public cmdSubGroupInfoColl: CmdSubsCollection<CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>>
-    public isGuildUsable: IsGuildUsable
-    public isDmsUsable: IsDmsUsable
+export class CmdParentInfo<UseScopeT extends UseScope> extends SubContainer<UseScopeT> implements HasEntry {
+    public commandInfo: CommandInfo
+    public useScope: UseScopeT
     public permissions: CmdPermissions.CmdPermission[]
 
     constructor(
         {
-            commandName, genericName, description,
-            cmdSubInfos = [], cmdSubGroupInfos = [],
-            isGuildUsable, isDmsUsable, permissions = []
+            commandInfo,
+            useScope, permissions = []
         }: {
-            commandName: string
-            genericName: string
-            description: string
-            cmdSubInfos?: CmdSubInfo<IsGuildUsable, IsDmsUsable>[]
-            cmdSubGroupInfos?: CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>[]
-            isGuildUsable: IsGuildUsable
-            isDmsUsable: IsDmsUsable
+            commandInfo: CommandInfo
+            useScope: UseScopeT
             permissions?: CmdPermissions.CmdPermission[]
         }
     ) {
-        this.commandName = commandName
-        this.genericName = genericName
-        this.description = description
-        this.cmdSubInfoColl = new CmdSubsCollection(cmdSubInfos)
-        this.cmdSubGroupInfoColl = new CmdSubsCollection(cmdSubGroupInfos)
-        this.isGuildUsable = isGuildUsable
-        this.isDmsUsable = isDmsUsable
+        super()
+        this.commandInfo = commandInfo
+        this.cmdSubInfoColl = new CmdSubsCollection([])
+        this.cmdSubGroupInfoColl = new CmdSubsCollection([])
+        this.useScope = useScope
         this.permissions = permissions
     }
 
     public createBuilder() {
         const builder = new Djs.SlashCommandBuilder()
-            .setName(this.commandName)
+            .setName(this.commandInfo.commandName)
             .setDescription(this.description)
 
         for (const cmdSubInfo of this.cmdSubInfoColl.cmdInfos) {
@@ -284,8 +321,12 @@ export class CmdParentInfo<
 }
 
 
-export type CmdWithEntry = CmdNormalInfo<boolean, boolean> | CmdParentInfo<boolean, boolean>
-export type CmdInfoAll = CmdNormalInfo<boolean, boolean> | CmdSubInfo<boolean, boolean> | CmdSubGroupInfo<boolean, boolean> | CmdParentInfo<boolean, boolean>
+export type CmdWithEntry = CmdNormalInfo<UseScope> | CmdParentInfo<UseScope>
+export type CmdInfoAll =
+    CmdNormalInfo<UseScope>
+    | CmdSubInfo<ParentType<UseScope>, UseScope>
+    | CmdSubGroupInfo<ParentType<UseScope>, UseScope>
+    | CmdParentInfo<UseScope>
 
 
 

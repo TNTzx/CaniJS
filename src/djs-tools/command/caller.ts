@@ -6,20 +6,20 @@ import * as CmdRegister from "./registerer"
 
 
 interface InfoSearchResult {
-    cmdSubInfo: CmdRegister.CmdSubInfo<boolean, boolean>
+    cmdSubInfo: CmdRegister.CmdSubInfo<CmdRegister.UseScope>
     permissions: CmdPerms.CmdPermission[]
 }
 
 
 
 function searchSubcommand(
-    cmdParentInfo: CmdRegister.CmdParentInfo<boolean, boolean>,
+    cmdParentInfo: CmdRegister.CmdParentInfo<CmdRegister.UseScope>,
     interactionOptions: Omit<Djs.CommandInteractionOptionResolver<Djs.CacheType>, "getMessage" | "getFocused">
 ) {
     function recursive(
         data: Djs.CommandInteractionOption<Djs.CacheType>,
-        cmdSubInfoColl: CmdRegister.CmdSubsCollection<CmdRegister.CmdSubInfo<boolean, boolean>>,
-        cmdSubGroupInfoColl: CmdRegister.CmdSubsCollection<CmdRegister.CmdSubGroupInfo<boolean, boolean>>
+        cmdSubInfoColl: CmdRegister.CmdSubsCollection<CmdRegister.UseScope, CmdRegister.CmdSubInfo<CmdRegister.UseScope>>,
+        cmdSubGroupInfoColl: CmdRegister.CmdSubsCollection<CmdRegister.UseScope, CmdRegister.CmdSubGroupInfo<CmdRegister.UseScope>>
     ): InfoSearchResult {
         const cmdSubInfo = cmdSubInfoColl.getFromName(data.name)
         if (cmdSubInfo !== undefined) return {cmdSubInfo: cmdSubInfo, permissions: cmdSubInfo.permissions}
@@ -49,7 +49,7 @@ export function addCmdCaller(client: Djs.Client) {
 
         const cmdWithEntry = CmdRegister.getRegisteredCmds().get(interaction.commandName)
 
-        let cmdFunctionalInfo: CmdRegister.CmdFunctionalInfo<Djs.SlashCommandBuilder | Djs.SlashCommandSubcommandBuilder, boolean, boolean>
+        let cmdFunctionalInfo: CmdRegister.CmdFunctionalInfo<Djs.SlashCommandBuilder | Djs.SlashCommandSubcommandBuilder, CmdRegister.UseScope>
         let permissions: CmdPerms.CmdPermission[]
 
         if (cmdWithEntry instanceof CmdRegister.CmdParentInfo) {

@@ -28,31 +28,16 @@ const cPerm: DjsTools.CmdPermission = {
 
 
 
-const cmdTestParams = [
-    DjsTools.createParameter(
-        DjsTools.ParamEnum.string, true,
-        "test", "Very long description!!!",
-    ).setLengthLimits(2, 10),
-    DjsTools.createParameter(
-        DjsTools.ParamEnum.integer, true,
-        "test2", "WAWA"
-    ).setSizeLimits(1, 10),
-    DjsTools.createParameter(
-        DjsTools.ParamEnum.number, true,
-        "test3", "WAWA"
-    ).setSizeLimits(10, 20)
-] as const
 export const cmdTest = new DjsTools.CmdNormalInfo({
     commandName: "test",
     genericName: "Test",
     description: "Test command!",
+
+    useScope: DjsTools.useScopeAll,
     permissions: [DjsTools.permServerOwner],
-    parameters: cmdTestParams,
 
     executeFunc: async (interaction) => {
-        const parameters = DjsTools.getParameterValues(interaction, cmdTestParams)
-        await interaction.reply(parameters[0])
-        await interaction.followUp((parameters[0] === "wa").toString())
+        await interaction.editReply("win")
     }
 })
 
@@ -60,13 +45,26 @@ async function commandTest(interaction: Djs.ChatInputCommandInteraction) {
     await interaction.editReply("test success")
 }
 
-export const cmdTestSubUnderGroup = new DjsTools.CmdSubInfo({
-    commandName: "subundergroup",
-    genericName: "Subcommand Under Group",
-    description: "Subcommand under the group.",
-    permissions: [cPerm],
+
+export const cmdTestParent = new DjsTools.CmdParentInfo({
+    commandName: "parent",
+    genericName: "Parent",
+    description: "Parent.",
+    cmdSubGroupInfos: [cmdTestSubGroup],
+    cmdSubInfos: [cmdTestSub],
+
+    isGuildUsable: true as const,
+    isDmsUsable: true as const,
+    permissions: [aPerm]
+})
+
+export const cmdTestSub = new DjsTools.CmdSubInfo({
+    commandName: "sub",
+    genericName: "Subcommand",
+    description: "Subcommand.",
     executeFunc: commandTest
 })
+
 export const cmdTestSubGroup = new DjsTools.CmdSubGroupInfo({
     commandName: "group",
     genericName: "Group",
@@ -74,19 +72,13 @@ export const cmdTestSubGroup = new DjsTools.CmdSubGroupInfo({
     cmdSubInfos: [cmdTestSubUnderGroup],
     permissions: [bPerm]
 })
-export const cmdTestSub = new DjsTools.CmdSubInfo({
-    commandName: "sub",
-    genericName: "Subcommand",
-    description: "Subcommand.",
+
+export const cmdTestSubUnderGroup = new DjsTools.CmdSubInfo({
+    commandName: "subundergroup",
+    genericName: "Subcommand Under Group",
+    description: "Subcommand under the group.",
+    permissions: [cPerm],
     executeFunc: commandTest
-})
-export const cmdTestParent = new DjsTools.CmdParentInfo({
-    commandName: "parent",
-    genericName: "Parent",
-    description: "Parent.",
-    cmdSubGroupInfos: [cmdTestSubGroup],
-    cmdSubInfos: [cmdTestSub],
-    permissions: [aPerm]
 })
 
 export default [
