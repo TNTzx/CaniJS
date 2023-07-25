@@ -6,31 +6,71 @@ import * as ParamParser from "./param_parser"
 
 
 type ParamStorage = readonly ParamParser.CmdParameter<boolean, ParamParser.ChoiceArrayGeneral<unknown>>[]
-type ExecuteFunc = (interaction: Djs.ChatInputCommandInteraction) => Promise<void>
 
-export class CmdFunctionalInfo<Builder extends Djs.SlashCommandBuilder | Djs.SlashCommandSubcommandBuilder> {
+
+export interface GuildCommandInteraction extends Djs.ChatInputCommandInteraction {
+    guild: typeof Djs.CommandInteraction.prototype.guild
+    guildId: typeof Djs.CommandInteraction.prototype.guildId
+    channel: typeof Djs.CommandInteraction.prototype.channel
+}
+
+export interface DMCommandInteraction
+    extends Omit<Djs.ChatInputCommandInteraction, "guild" | "guildId" | "channel">
+{}
+
+type UsabilityToInteractionMap<
+    IsGuildUsable extends boolean,
+    IsDmsUsable extends boolean
+> = (
+    IsGuildUsable extends true
+    ? (IsDmsUsable extends true ? Djs.ChatInputCommandInteraction : GuildCommandInteraction)
+    : (IsDmsUsable extends true ? DMCommandInteraction : never)
+)
+
+type ExecuteFunc<
+    IsGuildUsable extends boolean,
+    IsDmsUsable extends boolean
+> = (interaction: UsabilityToInteractionMap<IsGuildUsable, IsDmsUsable>) => Promise<void>
+
+
+
+export class CmdFunctionalInfo<
+    Builder extends Djs.SlashCommandBuilder | Djs.SlashCommandSubcommandBuilder,
+    IsGuildUsable extends boolean,
+    IsDmsUsable extends boolean
+> {
     public commandName: string
     public genericName: string
     public description: string
-    public permissions: CmdPermissions.CmdPermission[]
     public parameters: ParamStorage
-    public executeFunc: ExecuteFunc
+    public isGuildUsable: IsGuildUsable
+    public isDmsUsable: IsDmsUsable
+    public permissions: CmdPermissions.CmdPermission[]
+    public executeFunc: ExecuteFunc<IsGuildUsable, IsDmsUsable>
 
     constructor(
-        {commandName, genericName, description, permissions = [], parameters = [], executeFunc}: {
+        {
+            commandName, genericName, description, parameters = [],
+            isGuildUsable, isDmsUsable, permissions = [],
+            executeFunc
+        }: {
             commandName: string
             genericName: string
             description: string
-            permissions?: CmdPermissions.CmdPermission[]
             parameters?: ParamStorage
-            executeFunc: ExecuteFunc
+            isGuildUsable: IsGuildUsable
+            isDmsUsable: IsDmsUsable
+            permissions?: CmdPermissions.CmdPermission[]
+            executeFunc: ExecuteFunc<IsGuildUsable, IsDmsUsable>
         }
     ) {
         this.commandName = commandName
         this.genericName = genericName
         this.description = description
-        this.permissions = permissions
         this.parameters = parameters
+        this.isGuildUsable = isGuildUsable
+        this.isDmsUsable = isDmsUsable
+        this.permissions = permissions
         this.executeFunc = executeFunc
     }
 
@@ -110,18 +150,26 @@ interface HasEntry {
     createBuilder: () => Djs.SlashCommandBuilder
 }
 
-export class CmdNormalInfo extends CmdFunctionalInfo<Djs.SlashCommandBuilder> implements HasEntry {
+export class CmdNormalInfo<
+    IsGuildUsable extends boolean,
+    IsDmsUsable extends boolean
+> extends CmdFunctionalInfo<Djs.SlashCommandBuilder, IsGuildUsable, IsDmsUsable> implements HasEntry {
     public createBuilder(): Djs.SlashCommandBuilder {
         return this.setupBuilder(new Djs.SlashCommandBuilder())
     }
 }
 
-export class CmdSubInfo extends CmdFunctionalInfo<Djs.SlashCommandSubcommandBuilder> {
+export class CmdSubInfo<
+    IsGuildUsable extends boolean,
+    IsDmsUsable extends boolean
+> extends CmdFunctionalInfo<Djs.SlashCommandSubcommandBuilder, IsGuildUsable, IsDmsUsable> {
 }
 
 
 export class CmdSubsCollection<
-    CmdInfoType extends CmdSubInfo | CmdSubGroupInfo
+    IsGuildUsable extends boolean,
+    IsDmsUsable extends boolean,
+    CmdInfoType extends CmdSubInfo<IsGuildUsable, IsDmsUsable> | CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>
 > {
     private collection: Djs.Collection<string, CmdInfoType>
 
@@ -138,12 +186,15 @@ export class CmdSubsCollection<
     }
 }
 
-export class CmdSubGroupInfo {
+export class CmdSubGroupInfo<
+    IsGuildUsable extends boolean,
+    IsDmsUsable extends boolean
+> {
     public commandName: string
     public genericName: string
     public description: string
-    public cmdSubInfoColl: CmdSubsCollection<CmdSubInfo>
-    public cmdSubGroupInfoColl: CmdSubsCollection<CmdSubGroupInfo>
+    public cmdSubInfoColl: CmdSubsCollection<IsGuildUsable, IsDmsUsable, CmdSubInfo<IsGuildUsable, IsDmsUsable>>
+    public cmdSubGroupInfoColl: CmdSubsCollection<IsGuildUsable, IsDmsUsable, CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>>
     public permissions: CmdPermissions.CmdPermission[]
 
     constructor(
@@ -151,8 +202,8 @@ export class CmdSubGroupInfo {
             commandName: string,
             genericName: string,
             description: string,
-            cmdSubInfos: CmdSubInfo[]
-            cmdSubGroupInfos?: CmdSubGroupInfo[],
+            cmdSubInfos: CmdSubInfo<IsGuildUsable, IsDmsUsable>[]
+            cmdSubGroupInfos?: CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>[],
             permissions?: CmdPermissions.CmdPermission[]
         }
     ) {
@@ -178,21 +229,32 @@ export class CmdSubGroupInfo {
     }
 }
 
-export class CmdParentInfo implements HasEntry {
+export class CmdParentInfo<
+    IsGuildUsable extends boolean,
+    IsDmsUsable extends boolean
+> implements HasEntry {
     public commandName: string
     public genericName: string
     public description: string
-    public cmdSubInfoColl: CmdSubsCollection<CmdSubInfo>
-    public cmdSubGroupInfoColl: CmdSubsCollection<CmdSubGroupInfo>
+    public cmdSubInfoColl: CmdSubsCollection<IsGuildUsable, IsDmsUsable, CmdSubInfo<IsGuildUsable, IsDmsUsable>>
+    public cmdSubGroupInfoColl: CmdSubsCollection<IsGuildUsable, IsDmsUsable, CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>>
+    public isGuildUsable: IsGuildUsable
+    public isDmsUsable: IsDmsUsable
     public permissions: CmdPermissions.CmdPermission[]
 
     constructor(
-        {commandName, genericName, description, cmdSubInfos = [], cmdSubGroupInfos = [], permissions = []}: {
+        {
+            commandName, genericName, description,
+            cmdSubInfos = [], cmdSubGroupInfos = [],
+            isGuildUsable, isDmsUsable, permissions = []
+        }: {
             commandName: string
             genericName: string
             description: string
-            cmdSubInfos?: CmdSubInfo[]
-            cmdSubGroupInfos?: CmdSubGroupInfo[],
+            cmdSubInfos?: CmdSubInfo<IsGuildUsable, IsDmsUsable>[]
+            cmdSubGroupInfos?: CmdSubGroupInfo<IsGuildUsable, IsDmsUsable>[]
+            isGuildUsable: IsGuildUsable
+            isDmsUsable: IsDmsUsable
             permissions?: CmdPermissions.CmdPermission[]
         }
     ) {
@@ -201,6 +263,8 @@ export class CmdParentInfo implements HasEntry {
         this.description = description
         this.cmdSubInfoColl = new CmdSubsCollection(cmdSubInfos)
         this.cmdSubGroupInfoColl = new CmdSubsCollection(cmdSubGroupInfos)
+        this.isGuildUsable = isGuildUsable
+        this.isDmsUsable = isDmsUsable
         this.permissions = permissions
     }
 
@@ -222,8 +286,8 @@ export class CmdParentInfo implements HasEntry {
 }
 
 
-export type CmdWithEntry = CmdNormalInfo | CmdParentInfo
-export type CmdInfoAll = CmdNormalInfo | CmdSubInfo | CmdSubGroupInfo | CmdParentInfo
+export type CmdWithEntry = CmdNormalInfo<boolean, boolean> | CmdParentInfo<boolean, boolean>
+export type CmdInfoAll = CmdNormalInfo<boolean, boolean> | CmdSubInfo<boolean, boolean> | CmdSubGroupInfo<boolean, boolean> | CmdParentInfo<boolean, boolean>
 
 
 

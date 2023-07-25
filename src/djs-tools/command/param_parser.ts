@@ -231,7 +231,7 @@ export type ParamToResultMap<T extends CmdParameter<boolean, ChoiceArrayGeneral<
         }[number]
     ) : never
 
-export type ParamToNullMap<T extends CmdParameter<boolean, ChoiceArrayGeneral<unknown>>> = 
+export type ParamToNullMap<T extends CmdParameter<boolean, ChoiceArrayGeneral<unknown>>> =
     T extends CmdParameter<infer IsRequired, ChoiceArrayGeneral<unknown>> ? (
         IsRequired extends true ? NonNullable<ParamToResultMap<T>> : ParamToResultMap<T>
     ) : never
