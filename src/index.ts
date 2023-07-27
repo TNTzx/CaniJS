@@ -19,7 +19,9 @@ const mode = process.argv[2]
 let modePromise: () => Promise<void> = async () => {}
 
 if (mode === "--deploy-cmds-guild") {
-    modePromise = DjsTools.deployCmdsGuildBased
+    modePromise = async () => DjsTools.deployCmdsGuildBased(
+        DjsTools.getClient(), DjsTools.getBotToken(), DjsTools.getAppId()
+    )
 } else if (mode === "--deploy-cmds-global") {
     // TODO
 } else if (mode === "--login") {
@@ -41,16 +43,16 @@ if (environment === "--dev") {
 
 DjsTools.sayDevEnvStatus()
 
-DjsTools.addAllCmds(CommandImport())
+DjsTools.registerAllCmdTemplates(CommandImport())
 
 
 const prismaClient = DjsTools.getPrismaClient()
 
 modePromise().then(
-    async () => {prismaClient.$disconnect()}
+    async () => {await prismaClient.$disconnect()}
 ).catch(
-    (reason: unknown) => {
-        prismaClient.$disconnect()
+    async (reason: unknown) => {
+        await prismaClient.$disconnect()
         throw reason
     }
 )

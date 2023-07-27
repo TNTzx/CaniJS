@@ -52,41 +52,6 @@ export async function clientLogin() {
 }
 
 
-export async function deployCmdsGuildBased() {
-    const restApi = new Djs.REST()
-    restApi.setToken(getBotToken())
-
-    const cmdInfos = DjsToolsCmds.getRegisteredCmds()
-    const commandCount = cmdInfos.size
-
-    const client = getClient()
-
-    console.log("Logging into client for deploying slash commands (guild based)...")
-    await client.login(getBotToken())
-
-
-    const commandDatas = cmdInfos.map((cmdInfo) => cmdInfo.createBuilder().toJSON())
-
-    try {
-		console.log(`Refreshing ${commandCount} slash commands:`)
-        for (const cmdName of cmdInfos.keys())
-            console.log(`- ${cmdName}`)
-
-        for (const guild of client.guilds.cache.values()) {
-            await restApi.put(
-                Djs.Routes.applicationGuildCommands(getAppId(), guild.id),
-                { body: commandDatas },
-            )
-        }
-
-		console.log(`Successfully refreshed ${commandCount} slash commands.`)
-
-        client.destroy()
-	} catch (error) {
-		console.error(error)
-	}
-}
-
 
 let devEnvStatus = false
 export function setDevEnvStatus(isDevEnv: boolean) {

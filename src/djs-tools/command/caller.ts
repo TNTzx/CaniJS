@@ -1,41 +1,37 @@
 import Djs from "discord.js"
 
-import * as CmdPerms from "../permissions"
-import * as CmdRegister from "./registerer"
+import * as Perms from "../permissions"
+import * as Registerer from "./registerer"
+import * as Templates from "./templates"
 
 
 
-interface InfoSearchResult {
-    cmdSubInfo: CmdRegister.CmdSubInfo<CmdRegister.UseScope>
-    permissions: CmdPerms.CmdPermission[]
+interface EffectiveTemplate {
+    template: Templates.CmdTemplateLeaf
+    permissions: readonly Perms.CmdPermission[]
 }
 
 
 
 function searchSubcommand(
-    cmdParentInfo: CmdRegister.CmdParentInfo<CmdRegister.UseScope>,
+    cmdTemplateGroup: Templates.CmdTemplateGroup,
     interactionOptions: Omit<Djs.CommandInteractionOptionResolver<Djs.CacheType>, "getMessage" | "getFocused">
 ) {
-    function recursive(
-        data: Djs.CommandInteractionOption<Djs.CacheType>,
-        cmdSubInfoColl: CmdRegister.CmdSubsCollection<CmdRegister.UseScope, CmdRegister.CmdSubInfo<CmdRegister.UseScope>>,
-        cmdSubGroupInfoColl: CmdRegister.CmdSubsCollection<CmdRegister.UseScope, CmdRegister.CmdSubGroupInfo<CmdRegister.UseScope>>
-    ): InfoSearchResult {
-        const cmdSubInfo = cmdSubInfoColl.getFromName(data.name)
-        if (cmdSubInfo !== undefined) return {cmdSubInfo: cmdSubInfo, permissions: cmdSubInfo.permissions}
-
-        const cmdSubGroupInfo = cmdSubGroupInfoColl.getFromName(data.name)
-        if (cmdSubGroupInfo !== undefined) {
-            if (data.options === undefined) throw new Error("Command not found.")
-            const result = recursive(data.options[0], cmdSubGroupInfo.cmdSubInfoColl, cmdSubGroupInfo.cmdSubGroupInfoColl)
-            return {cmdSubInfo: result.cmdSubInfo, permissions: cmdSubGroupInfo.permissions.concat(result.permissions)}
+    function recursive(optionsData: Djs.CommandInteractionOption<Djs.CacheType>, currentTemplate: Templates.CmdTemplateType): EffectiveTemplate {
+        if (currentTemplate instanceof Templates.CmdTemplateLeaf) {
+            return {template: currentTemplate, permissions: currentTemplate.permissions}
         }
 
-        throw new Error("Command not found.")
+        const nextTemplate = currentTemplate.getSubTemplate(optionsData.name)
+        if (nextTemplate === undefined) throw new Error("Command not found.")
+
+        if (optionsData.options === undefined) throw new Error("Command not found.")
+        const result = recursive(optionsData.options[0], nextTemplate)
+        return {template: result.template, permissions: result.permissions.concat(currentTemplate.permissions)}
     }
 
-    const result = recursive(interactionOptions.data[0], cmdParentInfo.cmdSubInfoColl, cmdParentInfo.cmdSubGroupInfoColl)
-    return {cmdSubInfo: result.cmdSubInfo, permissions: cmdParentInfo.permissions.concat(result.permissions)}
+    const result = recursive(interactionOptions.data[0], cmdTemplateGroup)
+    return {template: result.template, permissions: cmdTemplateGroup.permissions.concat(result.permissions)}
 }
 
 
@@ -47,38 +43,36 @@ export function addCmdCaller(client: Djs.Client) {
 
         await interaction.deferReply()
 
-        const cmdWithEntry = CmdRegister.getRegisteredCmds().get(interaction.commandName)
+        const initialCmdTemplate = Registerer.getCmdTemplate(interaction.commandName)
 
-        let cmdFunctionalInfo: CmdRegister.CmdFunctionalInfo<Djs.SlashCommandBuilder | Djs.SlashCommandSubcommandBuilder, CmdRegister.UseScope>
-        let permissions: CmdPerms.CmdPermission[]
+        let effectiveTemplate: EffectiveTemplate
 
-        if (cmdWithEntry instanceof CmdRegister.CmdParentInfo) {
-            const result = searchSubcommand(cmdWithEntry, interaction.options)
-            cmdFunctionalInfo = result.cmdSubInfo
-            permissions = result.permissions
-        } else if (cmdWithEntry instanceof CmdRegister.CmdNormalInfo) {
-            cmdFunctionalInfo = cmdWithEntry
-            permissions = cmdWithEntry.permissions
+        if (initialCmdTemplate instanceof Templates.CmdTemplateGroup) {
+            const result = searchSubcommand(initialCmdTemplate, interaction.options)
+            effectiveTemplate = result
+        } else if (initialCmdTemplate instanceof Templates.CmdTemplateLeaf) {
+            effectiveTemplate = {
+                template: initialCmdTemplate,
+                permissions: initialCmdTemplate.permissions
+            }
         } else {
             await interaction.editReply(`\`${interaction.commandName}\` is not a command.`)
             return
         }
 
 
-        if (permissions !== undefined) {
-            for (const cmdPerm of permissions) {
-                if (!cmdPerm.checkGrant(interaction)) {
-                    await interaction.editReply(`You do not have the permission to use this command! ${cmdPerm.onRejectMessage}`)
-                    return
-                }
+        for (const cmdPerm of effectiveTemplate.permissions) {
+            if (!cmdPerm.checkGrant(interaction)) {
+                await interaction.editReply(`You do not have the permission to use this command! ${cmdPerm.onRejectMessage}`)
+                return
             }
         }
 
 
 
         try {
-            await cmdFunctionalInfo.executeFunc(interaction)
-        } catch (error: unknown) {
+            await effectiveTemplate.template.executeFunc(interaction)
+        } catch (error) {
             console.error(error)
 
             const userDisplay = error instanceof Error ? error.name : typeof error

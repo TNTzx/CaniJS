@@ -19,12 +19,10 @@ const paramSetAdmin = [
         "admin role", "The new admin role."
     )
 ] as const
-export const cmdSetAdmin = new DjsTools.CmdNormalInfo({
-    commandName: "setadmin",
-    genericName: "Set Admin",
+export const cmdSetAdmin = new DjsTools.CmdTemplateLeaf({
+    id: "setadmin",
     description: "Sets the admin role for this server.",
-    isGuildUsable: true as const,
-    isDmsUsable: false as const,
+    useScope: DjsTools.useScopeGuildOnly,
     parameters: paramSetAdmin,
     permissions: [DjsTools.permServerOwner],
 

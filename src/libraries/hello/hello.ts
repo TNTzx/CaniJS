@@ -2,11 +2,10 @@ import * as DjsTools from "djs-tools"
 
 
 
-export const cmdHello = new DjsTools.CmdNormalInfo({
-    commandName: "hello",
-    genericName: "Hello",
+export const cmdHello = new DjsTools.CmdTemplateLeaf({
+    id: "hello",
     description: "Says hello! Dog!",
-    permissions: [DjsTools.permServerOwner],
+    useScope: DjsTools.useScopeAll,
     executeFunc: async (interaction) => {
         await interaction.reply("Hellooo! :D")
     }

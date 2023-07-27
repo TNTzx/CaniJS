@@ -28,11 +28,9 @@ const cPerm: DjsTools.CmdPermission = {
 
 
 
-export const cmdTest = new DjsTools.CmdNormalInfo({
-    commandName: "test",
-    genericName: "Test",
+export const cmdTest = new DjsTools.CmdTemplateLeaf({
+    id: "test",
     description: "Test command!",
-
     useScope: DjsTools.useScopeAll,
     permissions: [DjsTools.permServerOwner],
 
@@ -46,42 +44,44 @@ async function commandTest(interaction: Djs.ChatInputCommandInteraction) {
 }
 
 
-export const cmdTestParent = new DjsTools.CmdParentInfo({
-    commandName: "parent",
-    genericName: "Parent",
-    description: "Parent.",
-    cmdSubGroupInfos: [cmdTestSubGroup],
-    cmdSubInfos: [cmdTestSub],
-
-    isGuildUsable: true as const,
-    isDmsUsable: true as const,
+export const cmdTestA = new DjsTools.CmdTemplateGroup({
+    id: "a",
+    description: "a",
+    useScope: DjsTools.useScopeAll,
     permissions: [aPerm]
 })
 
-export const cmdTestSub = new DjsTools.CmdSubInfo({
-    commandName: "sub",
-    genericName: "Subcommand",
-    description: "Subcommand.",
+export const cmdTestAA = cmdTestA.addSubTemplateLeaf({
+    id: "aa",
+    description: "aa",
     executeFunc: commandTest
 })
 
-export const cmdTestSubGroup = new DjsTools.CmdSubGroupInfo({
-    commandName: "group",
-    genericName: "Group",
-    description: "Group.",
-    cmdSubInfos: [cmdTestSubUnderGroup],
+export const cmdTestAB = cmdTestA.addSubTemplateGroup({
+    id: "ab",
+    description: "ab",
     permissions: [bPerm]
 })
 
-export const cmdTestSubUnderGroup = new DjsTools.CmdSubInfo({
-    commandName: "subundergroup",
-    genericName: "Subcommand Under Group",
-    description: "Subcommand under the group.",
+export const cmdTestABA = cmdTestAB.addSubTemplateLeaf({
+    id: "aba",
+    description: "aba",
+    executeFunc: commandTest
+})
+
+export const cmdTestABB = cmdTestAB.addSubTemplateGroup({
+    id: "abb",
+    description: "abb",
     permissions: [cPerm],
+})
+
+export const cmdTestABBA = cmdTestABB.addSubTemplateLeaf({
+    id: "abba",
+    description: "abba",
     executeFunc: commandTest
 })
 
 export default [
     cmdTest,
-    cmdTestParent
+    cmdTestA
 ]
