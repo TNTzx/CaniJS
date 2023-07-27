@@ -17,21 +17,43 @@ function searchSubcommand(
     cmdTemplateGroup: Templates.CmdTemplateGroup,
     interactionOptions: Omit<Djs.CommandInteractionOptionResolver<Djs.CacheType>, "getMessage" | "getFocused">
 ) {
-    function recursive(optionsData: Djs.CommandInteractionOption<Djs.CacheType>, currentTemplate: Templates.CmdTemplateType): EffectiveTemplate {
+    function recursive(nextPath: string[], currentTemplate: Templates.CmdTemplateType): EffectiveTemplate {
         if (currentTemplate instanceof Templates.CmdTemplateLeaf) {
             return {template: currentTemplate, permissions: currentTemplate.permissions}
         }
 
-        const nextTemplate = currentTemplate.getSubTemplate(optionsData.name)
+        if (nextPath.length === 0) throw new Error("Command not found.")
+
+        const nextTemplate = currentTemplate.getSubTemplate(nextPath[0])
         if (nextTemplate === undefined) throw new Error("Command not found.")
 
-        if (optionsData.options === undefined) throw new Error("Command not found.")
-        const result = recursive(optionsData.options[0], nextTemplate)
+        const result = recursive(nextPath.slice(1), nextTemplate)
         return {template: result.template, permissions: result.permissions.concat(currentTemplate.permissions)}
     }
 
-    const result = recursive(interactionOptions.data[0], cmdTemplateGroup)
-    return {template: result.template, permissions: cmdTemplateGroup.permissions.concat(result.permissions)}
+    function getPath(optionsData: Djs.CommandInteractionOption<Djs.CacheType>): string[] {
+        if (optionsData.options === undefined) throw new Error("Interaction options are invalid.")
+
+        // type >= 3 means not subcommandgroup or subcommand
+        if (optionsData.options.length === 0 || optionsData.options[0].type >= 3) return [optionsData.name]
+        return [optionsData.name, ...getPath(optionsData.options[0])]
+    }
+
+    function expandPath(path: string[]) {
+        let newPath: string[] = []
+        for (const pathPoint of path) {
+            if (pathPoint.includes(Templates.CmdTemplateGroup.combineIdSeparator)) {
+                newPath = newPath.concat(pathPoint.split(Templates.CmdTemplateGroup.combineIdSeparator))
+            } else {
+                newPath.push(pathPoint)
+            }
+        }
+
+        return newPath
+    }
+
+    const result = recursive(expandPath(getPath(interactionOptions.data[0])), cmdTemplateGroup)
+    return {template: result.template, permissions: result.permissions.concat(cmdTemplateGroup.permissions)}
 }
 
 

@@ -44,6 +44,14 @@ async function commandTest(interaction: Djs.ChatInputCommandInteraction) {
 }
 
 
+const dummyOptions = [
+    DjsTools.createParameter(
+        DjsTools.ParamEnum.string, false,
+        "parameter", "Parameter!"
+    )
+] as const
+
+
 export const cmdTestA = new DjsTools.CmdTemplateGroup({
     id: "a",
     description: "a",
@@ -78,6 +86,7 @@ export const cmdTestABB = cmdTestAB.addSubTemplateGroup({
 export const cmdTestABBA = cmdTestABB.addSubTemplateLeaf({
     id: "abba",
     description: "abba",
+    parameters: dummyOptions,
     executeFunc: commandTest
 })
 

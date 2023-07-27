@@ -121,14 +121,14 @@ export class CmdTemplateGroup<UseScopeT extends UseScope = UseScope> {
 
         const builderBranches: [...CmdTemplateGroup[], CmdTemplateLeaf][] = []
         for (const branch of branches) {
-            if (branch.length >= 1 || branch.length <= 3) {
+            if (branch.length >= 1 && branch.length <= 3) {
                 builderBranches.push(branch)
             } else if (branch.length > 3) {
-                const combinedSubgroup = CmdTemplateGroup.subgroupCombine(branch.slice(1, -2) as CmdTemplateGroup[])
+                const combinedSubgroup = CmdTemplateGroup.subgroupCombine(branch.slice(1, -1) as CmdTemplateGroup[])
                 builderBranches.push([
                     branch[0] as CmdTemplateGroup,
                     combinedSubgroup as CmdTemplateGroup,
-                    branch[-1] as CmdTemplateLeaf
+                    branch[branch.length - 1] as CmdTemplateLeaf
                 ])
             } else {
                 throw new Error("Branch length should never be 0.")
