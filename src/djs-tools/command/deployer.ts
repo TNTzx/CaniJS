@@ -19,7 +19,7 @@ export async function deployCmdsGuildBased(client: Djs.Client, botToken: string,
     try {
 		console.log(`Refreshing ${registeredCmdTemplateMap.size} slash commands:`)
         for (const cmdTemplate of registeredCmdTemplateMap.values())
-            console.log(cmdTemplate.createBuilder())
+            console.log(cmdTemplate.getDeployDisplay())
 
         const guilds = [...client.guilds.cache.values()]
         for (const [idx, guild] of guilds.entries()) {

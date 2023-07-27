@@ -1,13 +1,13 @@
 import * as DjsTools from "djs-tools"
 
-// import * as Hello from "./hello/hello"
+import * as Hello from "./hello/hello"
 
 import Test from "./test/test"
 
 
 
-let commandList: DjsTools.CmdWithEntry[] = [
-    // Hello.cmdHello
+let commandList: DjsTools.CmdTemplateType[] = [
+    Hello.cmdHello
 ]
 
 
