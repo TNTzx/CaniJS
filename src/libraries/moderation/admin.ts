@@ -39,11 +39,11 @@ async function editAdminRole(guildSid: string, adminRoleSid: string) {
 const paramSetAdmin = [
     DjsTools.createParameter(
         DjsTools.ParamEnum.role, true,
-        "adminRole", "The new admin role."
+        "admin-role", "The new admin role."
     )
 ] as const
 export const cmdSetAdmin = new DjsTools.CmdTemplateLeaf({
-    id: "setAdmin",
+    id: "set-admin",
     description: "Sets the admin role for this server.",
     useScope: DjsTools.useScopeGuildOnly,
     parameters: paramSetAdmin,
