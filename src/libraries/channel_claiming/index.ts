@@ -4,7 +4,7 @@ import * as DjsTools from "djs-tools"
 
 export const dbGuildSetupper = new DjsTools.DBGuildSetupper({
     async isAlreadySetup(guildSid) {
-        const result = DjsTools.getPrismaClient().moduleChannelClaiming.findFirst({
+        const result = await DjsTools.getPrismaClient().moduleChannelClaiming.findFirst({
             where: {guildSid: guildSid}
         })
 
