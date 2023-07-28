@@ -85,8 +85,8 @@ export function addCmdCaller(client: Djs.Client) {
 
 
         for (const cmdPerm of effectiveTemplate.useCases) {
-            const conditionResult = cmdPerm.isMet(interaction)
-            if (typeof conditionResult === "string") {
+            const conditionResult = await cmdPerm.isMet(interaction)
+            if (conditionResult !== null) {
                 await interaction.editReply(`You cannot use this command! ${conditionResult}`)
                 return
             }

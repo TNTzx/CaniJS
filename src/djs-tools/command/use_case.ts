@@ -2,7 +2,8 @@ import * as UseScope from "./use_scope"
 
 
 
-type ConditionFunc<UseScopeT extends UseScope.UseScope> = (interaction: UseScope.UseScopeToInteractionMap<UseScopeT>) => string | null
+type ConditionFunc<UseScopeT extends UseScope.UseScope> =
+    (interaction: UseScope.UseScopeToInteractionMap<UseScopeT>) => Promise<string | null>
 
 
 export class UseCase<UseScopeT extends UseScope.UseScope = UseScope.UseScope> {
@@ -26,20 +27,20 @@ export class UseCase<UseScopeT extends UseScope.UseScope = UseScope.UseScope> {
     }
 
 
-    public isMet(interaction: UseScope.UseScopeToInteractionMap<UseScopeT>): string | null {
+    public async isMet(interaction: UseScope.UseScopeToInteractionMap<UseScopeT>): Promise<string | null> {
         for (const initialUseCase of this.initialUseCases) {
-            const result = initialUseCase.isMet(interaction)
+            const result = await initialUseCase.isMet(interaction)
             if (typeof result === "string") return result
         }
 
-        return this.conditionFunc(interaction)
+        return await this.conditionFunc(interaction)
     }
 }
 
 export const caseServerOwner = new UseCase({
     name: "server owner",
     useScope: UseScope.useScopeGuildOnly,
-    conditionFunc: interaction => {
+    conditionFunc: async interaction => {
         if (!(interaction.user.id === interaction.guild.ownerId))
             return "You are not the server owner!"
 
