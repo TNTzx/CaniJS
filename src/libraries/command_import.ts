@@ -22,9 +22,12 @@ if (DjsTools.getDevEnvStatus()) {
 
 
 export default () => {
+    let fullCommandList: DjsTools.CmdTemplateType[]
     if (DjsTools.getDevEnvStatus()) {
-        return commandList.concat(Test)
+        fullCommandList = commandList.concat(Test)
+    } else {
+        fullCommandList = commandList
     }
 
-    return commandList
+    DjsTools.registerAllCmdTemplates(fullCommandList)
 }

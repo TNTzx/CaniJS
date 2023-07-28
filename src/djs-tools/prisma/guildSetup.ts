@@ -54,9 +54,46 @@ export async function updateGuildsDB(botGuildSids: string[]) {
 }
 
 
+
+export class DBGuildSetupper {
+    public isAlreadySetup: (guildSid: string) => Promise<boolean>
+    public setup: (guildSid: string) => Promise<unknown>
+
+    constructor(
+        args: {
+            isAlreadySetup: (guildSid: string) => Promise<boolean>,
+            setup: (guildSid: string) => Promise<unknown>
+        }
+    ) {
+        this.isAlreadySetup = args.isAlreadySetup
+        this.setup = args.setup
+    }
+}
+
+const dbGuildSetuppers: DBGuildSetupper[] = []
+export function addDBGuildSetupper(dbGuildSetupper: DBGuildSetupper) {
+    dbGuildSetuppers.push(dbGuildSetupper)
+}
+
+export async function runGuildSetupFuncs(guildSid: string) {
+    for (const dbGuildSetupper of dbGuildSetuppers) {
+        if (!(await dbGuildSetupper.isAlreadySetup(guildSid)))
+            await dbGuildSetupper.setup(guildSid)
+    }
+}
+
+export async function runGuildSetupFuncsAllGuilds(guildSids: string[]) {
+    for (const guildSid of guildSids) {
+        await runGuildSetupFuncs(guildSid)
+    }
+}
+
+
+
 export function addGuildDBUpdater(botClient: Djs.Client) {
     botClient.on(Djs.Events.GuildCreate, async guild => {
         await addGuildToDB(guild.id)
+        await runGuildSetupFuncs(guild.id)
     })
 
     botClient.on(Djs.Events.GuildDelete, async guild => {
@@ -64,6 +101,14 @@ export function addGuildDBUpdater(botClient: Djs.Client) {
     })
 
     botClient.on(Djs.Events.ClientReady, async client => {
-        await updateGuildsDB(client.guilds.cache.map(guild => guild.id))
+        const allGuildIds = client.guilds.cache.map(guild => guild.id)
+
+        console.log("Updating guild list...")
+        await updateGuildsDB(allGuildIds)
+
+        console.log("Setting up all guilds...")
+        await runGuildSetupFuncsAllGuilds(allGuildIds)
+
+        console.log("Finished setting up database for all guilds.")
     })
 }

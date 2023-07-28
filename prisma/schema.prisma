@@ -10,7 +10,8 @@ generator client {
 model Guild {
     guildSid String @id
 
-    permissions Permissions?
+    permissions           Permissions?
+    moduleChannelClaiming ModuleChannelClaiming?
 }
 
 model Permissions {
@@ -19,4 +20,24 @@ model Permissions {
     guildSid String @unique
 
     adminSid String? @unique
+}
+
+model ModuleChannelClaiming {
+    id       Int    @id @default(autoincrement())
+    guild    Guild  @relation(fields: [guildSid], references: [guildSid], onDelete: Cascade)
+    guildSid String @unique
+
+    claimChannels ClaimChannel[]
+}
+
+model ClaimChannel {
+    id                Int                   @id @default(autoincrement())
+    channelClaiming   ModuleChannelClaiming @relation(fields: [channelClaimingId], references: [id], onDelete: Cascade)
+    channelClaimingId Int
+
+    channelSid String @unique
+
+    isClaimed Boolean   @default(false)
+    location  String?
+    claimedAt DateTime?
 }
