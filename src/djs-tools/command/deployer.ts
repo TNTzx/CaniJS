@@ -1,6 +1,6 @@
 import Djs from "discord.js"
 
-import * as CmdRegister from "./registerer"
+import * as Registerer from "./registerer"
 
 
 
@@ -8,7 +8,7 @@ export async function deployCmdsGuildBased(client: Djs.Client, botToken: string,
     const restApi = new Djs.REST()
     restApi.setToken(botToken)
 
-    const registeredCmdTemplateMap = CmdRegister.getRegisteredCmdTemplateMap()
+    const registeredCmdTemplateMap = Registerer.getRegisteredCmdTemplateMap()
 
     console.log("Logging into client for deploying slash commands (guild based)...")
     await client.login(botToken)

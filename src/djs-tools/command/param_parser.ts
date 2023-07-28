@@ -1,6 +1,6 @@
 import Djs from "discord.js"
 
-import * as ScopedInteractions from "./scoped_interactions"
+import * as UseScope from "./use_scope"
 
 
 
@@ -249,7 +249,7 @@ export type ParamsMap<T extends readonly CmdParameter<boolean, ChoiceArrayGenera
 export function getParameterValues<
     Parameters extends readonly CmdParameter<boolean, ChoiceArrayGeneral<unknown>>[],
 >(
-    interaction: ScopedInteractions.AllScopedCommandInteraction,
+    interaction: UseScope.AllScopedCommandInteraction,
     parameters: Parameters,
 ): ParamsMap<Parameters> {
     const options = interaction.options

@@ -1,14 +1,14 @@
 import Djs from "discord.js"
 
-import * as Perms from "../permissions"
-import * as Registerer from "./registerer"
+import * as UseCase from "./use_case"
 import * as Templates from "./templates"
+import * as Registerer from "./registerer"
 
 
 
 interface EffectiveTemplate {
     template: Templates.CmdTemplateLeaf
-    permissions: readonly Perms.CmdPermission[]
+    useCases: readonly UseCase.UseCase[]
 }
 
 
@@ -16,10 +16,10 @@ interface EffectiveTemplate {
 function searchSubcommand(
     cmdTemplateGroup: Templates.CmdTemplateGroup,
     interactionOptions: Omit<Djs.CommandInteractionOptionResolver<Djs.CacheType>, "getMessage" | "getFocused">
-) {
+): EffectiveTemplate {
     function recursive(nextPath: string[], currentTemplate: Templates.CmdTemplateType): EffectiveTemplate {
         if (currentTemplate instanceof Templates.CmdTemplateLeaf) {
-            return {template: currentTemplate, permissions: currentTemplate.permissions}
+            return { template: currentTemplate, useCases: currentTemplate.useCases }
         }
 
         if (nextPath.length === 0) throw new Error("Command not found.")
@@ -28,7 +28,7 @@ function searchSubcommand(
         if (nextTemplate === undefined) throw new Error("Command not found.")
 
         const result = recursive(nextPath.slice(1), nextTemplate)
-        return {template: result.template, permissions: result.permissions.concat(currentTemplate.permissions)}
+        return { template: result.template, useCases: result.useCases.concat(currentTemplate.useCases) }
     }
 
     function getPath(optionsData: Djs.CommandInteractionOption<Djs.CacheType>): string[] {
@@ -53,7 +53,7 @@ function searchSubcommand(
     }
 
     const result = recursive(expandPath(getPath(interactionOptions.data[0])), cmdTemplateGroup)
-    return {template: result.template, permissions: result.permissions.concat(cmdTemplateGroup.permissions)}
+    return { template: result.template, useCases: result.useCases.concat(cmdTemplateGroup.useCases) }
 }
 
 
@@ -75,7 +75,7 @@ export function addCmdCaller(client: Djs.Client) {
         } else if (initialCmdTemplate instanceof Templates.CmdTemplateLeaf) {
             effectiveTemplate = {
                 template: initialCmdTemplate,
-                permissions: initialCmdTemplate.permissions
+                useCases: initialCmdTemplate.useCases
             }
         } else {
             await interaction.editReply(`\`${interaction.commandName}\` is not a command.`)
@@ -83,9 +83,11 @@ export function addCmdCaller(client: Djs.Client) {
         }
 
 
-        for (const cmdPerm of effectiveTemplate.permissions) {
-            if (!cmdPerm.checkGrant(interaction)) {
-                await interaction.editReply(`You do not have the permission to use this command! ${cmdPerm.onRejectMessage}`)
+
+        for (const cmdPerm of effectiveTemplate.useCases) {
+            const conditionResult = cmdPerm.isMet(interaction)
+            if (typeof conditionResult === "string") {
+                await interaction.editReply(`You cannot use this command! ${conditionResult}`)
                 return
             }
         }

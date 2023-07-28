@@ -1,59 +1,38 @@
 import Djs from "discord.js"
 
 import * as ParamParser from "./param_parser"
-import * as CmdPermissions from "../permissions"
-import * as ScopedInteractions from "./scoped_interactions"
-
-
-export type UseScope<IsGuildUsable extends boolean = boolean, IsDmsUsable extends boolean = boolean> = {
-    isGuildUsable: IsGuildUsable
-    isDmsUsable: IsDmsUsable
-}
-
-export const useScopeAll: UseScope<true, true> = {isGuildUsable: true, isDmsUsable: true}
-export const useScopeGuildOnly: UseScope<true, false> = {isGuildUsable: true, isDmsUsable: false}
-export const useScopeDMsOnly: UseScope<false, true> = {isGuildUsable: false, isDmsUsable: true}
-
-type UseScopeToInteractionMap<UseScopeT extends UseScope<boolean, boolean>> = (
-    UseScopeT extends UseScope<true, true>
-    ? Djs.ChatInputCommandInteraction
-
-    : UseScopeT extends UseScope<true, false>
-    ? ScopedInteractions.GuildCommandInteraction
-
-    : UseScopeT extends UseScope<false, true>
-    ? ScopedInteractions.DMCommandInteraction
-
-    : ScopedInteractions.AllScopedCommandInteraction
-)
-
-type ExecuteFunc<UseScopeT extends UseScope> = (interaction: UseScopeToInteractionMap<UseScopeT>) => Promise<void>
-type ParamStorage = readonly ParamParser.CmdParameter<boolean, ParamParser.ChoiceArrayGeneral<unknown>>[]
-type PermStorage = readonly CmdPermissions.CmdPermission[]
+import * as UseCase from "./use_case"
+import * as UseScope from "./use_scope"
 
 
 
-type CmdTemplateGroupArgs<UseScopeT extends UseScope> = {
+type ExecuteFunc<UseScopeT extends UseScope.UseScope> = (interaction: UseScope.UseScopeToInteractionMap<UseScopeT>) => Promise<void>
+type Params = readonly ParamParser.CmdParameter<boolean, ParamParser.ChoiceArrayGeneral<unknown>>[]
+type UseCases<UseScopeT extends UseScope.UseScope> = readonly UseCase.UseCase<UseScopeT>[]
+
+
+
+type CmdTemplateGroupArgs<UseScopeT extends UseScope.UseScope> = {
     id: string
     description: string
     useScope: UseScopeT
-    permissions?: PermStorage
+    useCases?: UseCases<UseScopeT>
     subTemplateMap?: Map<string, CmdTemplateType<UseScopeT>>
 }
-export class CmdTemplateGroup<UseScopeT extends UseScope = UseScope> {
+export class CmdTemplateGroup<UseScopeT extends UseScope.UseScope = UseScope.UseScope> {
     static combineIdSeparator: string = "_"
 
     public id: string
     public description: string
     public useScope: UseScopeT
-    public permissions: PermStorage
+    public useCases: UseCases<UseScopeT>
     public subTemplateMap: Map<string, CmdTemplateType<UseScopeT>>
 
     constructor(args: CmdTemplateGroupArgs<UseScopeT>) {
         this.id = args.id
         this.description = args.description
         this.useScope = args.useScope
-        this.permissions = args.permissions ?? []
+        this.useCases = args.useCases ?? []
 
         this.subTemplateMap = args.subTemplateMap ?? new Map()
     }
@@ -92,7 +71,7 @@ export class CmdTemplateGroup<UseScopeT extends UseScope = UseScope> {
             id: cmdTemplateGroups.map(cmdTemplateGroup => cmdTemplateGroup.id).join(CmdTemplateGroup.combineIdSeparator),
             description: defaultCmdTemplateGroup.description,
             useScope: defaultCmdTemplateGroup.useScope,
-            permissions: cmdTemplateGroups.map(cmdTemplateGroup => cmdTemplateGroup.permissions).flat(1),
+            useCases: cmdTemplateGroups.map(cmdTemplateGroup => cmdTemplateGroup.useCases).flat(1),
             subTemplateMap: combinedSubTemplateMap
         })
     }
@@ -221,20 +200,20 @@ export class CmdTemplateGroup<UseScopeT extends UseScope = UseScope> {
 
 
 
-type CmdTemplateLeafArgs<UseScopeT extends UseScope> = {
+type CmdTemplateLeafArgs<UseScopeT extends UseScope.UseScope> = {
     id: string
     description: string
     useScope: UseScopeT
-    parameters?: ParamStorage
-    permissions?: PermStorage
+    parameters?: Params
+    useCases?: UseCases<UseScopeT>
     executeFunc: ExecuteFunc<UseScopeT>
 }
-export class CmdTemplateLeaf<UseScopeT extends UseScope = UseScope> {
+export class CmdTemplateLeaf<UseScopeT extends UseScope.UseScope = UseScope.UseScope> {
     public id: string
     public description: string
     public useScope: UseScopeT
-    public parameters: ParamStorage
-    public permissions: PermStorage
+    public parameters: Params
+    public useCases: UseCases<UseScopeT>
     public executeFunc: ExecuteFunc<UseScopeT>
 
     constructor(args: CmdTemplateLeafArgs<UseScopeT>) {
@@ -242,7 +221,7 @@ export class CmdTemplateLeaf<UseScopeT extends UseScope = UseScope> {
         this.description = args.description
         this.useScope = args.useScope
         this.parameters = args.parameters ?? []
-        this.permissions = args.permissions ?? []
+        this.useCases = args.useCases ?? []
         this.executeFunc = args.executeFunc
     }
 
@@ -326,4 +305,4 @@ export class CmdTemplateLeaf<UseScopeT extends UseScope = UseScope> {
 }
 
 
-export type CmdTemplateType<UseScopeT extends UseScope = UseScope> = CmdTemplateGroup<UseScopeT> | CmdTemplateLeaf<UseScopeT>
+export type CmdTemplateType<UseScopeT extends UseScope.UseScope = UseScope.UseScope> = CmdTemplateGroup<UseScopeT> | CmdTemplateLeaf<UseScopeT>

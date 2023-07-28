@@ -6,8 +6,8 @@ import * as DjsTools from "djs-tools"
 
 async function editAdminRole(guildSid: string, adminRoleSid: string) {
     return await DjsTools.getPrismaClient().permissions.update({
-        where: {guildSid: guildSid},
-        data: {adminSid: adminRoleSid}
+        where: { guildSid: guildSid },
+        data: { adminSid: adminRoleSid }
     })
 }
 
@@ -24,7 +24,7 @@ export const cmdSetAdmin = new DjsTools.CmdTemplateLeaf({
     description: "Sets the admin role for this server.",
     useScope: DjsTools.useScopeGuildOnly,
     parameters: paramSetAdmin,
-    permissions: [DjsTools.permServerOwner],
+    useCases: [DjsTools.caseServerOwner],
 
     async executeFunc(interaction) {
         if (interaction.isCommand()) interaction
