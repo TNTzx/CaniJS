@@ -50,13 +50,12 @@ export const cmdSetAdmin = new DjsTools.CmdTemplateLeaf({
     useCases: [DjsTools.caseServerOwner],
 
     async executeFunc(interaction) {
-        if (interaction.isCommand()) interaction
         const parameters = DjsTools.getParameterValues(interaction, paramSetAdmin)
 
         await interaction.editReply(`Setting admin to ${Djs.inlineCode(parameters[0].name)}...`)
 
         const currentAdminRoleSid = await getAdminRoleSid(interaction.guild.id)
-        if (currentAdminRoleSid === parameters[0].id) { // TEST
+        if (currentAdminRoleSid === parameters[0].id) {
             await interaction.followUp("That role is already the admin role set for this server!")
             return
         }
