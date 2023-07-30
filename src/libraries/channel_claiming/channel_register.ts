@@ -11,8 +11,9 @@ const paramRegister = [
     new DjsTools.CmdParamString(
         true,
         "action", "The action to do.", [
-            DjsTools.createGenericChoice("wa")
-        ] as const
+            DjsTools.createGenericChoice("wa"),
+            DjsTools.createGenericChoice("wae")
+        ]
     )
 ] as const
 

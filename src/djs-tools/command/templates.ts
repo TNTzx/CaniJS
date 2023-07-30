@@ -7,7 +7,7 @@ import * as UseScope from "./use_scope"
 
 
 type ExecuteFunc<UseScopeT extends UseScope.UseScope> = (interaction: UseScope.UseScopeToInteractionMap<UseScopeT>) => Promise<void>
-type Params = readonly ParamParser.CmdParameter<unknown, boolean, ParamParser.Choices<unknown>>[]
+type Params = readonly ParamParser.CmdParameter<unknown, boolean, ParamParser.Choices<string | number>>[]
 type UseCases<UseScopeT extends UseScope.UseScope> = readonly UseCase.UseCase<UseScopeT>[]
 
 
@@ -231,65 +231,8 @@ export class CmdTemplateLeaf<UseScopeT extends UseScope.UseScope = UseScope.UseS
             .setName(this.id)
             .setDescription(this.description)
 
-        // TODO move this to param_parser.ts
-        function getSetupOptionFunc<T extends Djs.ApplicationCommandOptionBase>(parameter: ParamParser.CmdParameter<unknown, boolean, ParamParser.Choices<string | number | undefined>>) {
-            return (option: T) => {
-                option
-                    .setName(parameter.name)
-                    .setDescription(parameter.description)
-                    .setRequired(parameter.required)
-
-                if (parameter.choices !== undefined)
-                    (option as unknown as T extends Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<infer R> ? Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<R> : never)
-                        .addChoices(...(parameter.choices as NonNullable<ParamParser.Choices<string | number>>))
-
-                if (parameter instanceof ParamParser.CmdParamString) {
-                    (option as unknown as Djs.SlashCommandStringOption)
-                        .setMaxLength(parameter.max_chars)
-                        .setMinLength(parameter.min_chars)
-                } else if (parameter instanceof ParamParser.CmdParamInteger || parameter instanceof ParamParser.CmdParamNumber) {
-                    if (parameter.max_value !== undefined) {
-                        (option as unknown as Djs.ApplicationCommandNumericOptionMinMaxValueMixin)
-                            .setMaxValue(parameter.max_value)
-                    }
-                    if (parameter.min_value !== undefined) {
-                        (option as unknown as Djs.ApplicationCommandNumericOptionMinMaxValueMixin)
-                            .setMinValue(parameter.min_value)
-                    }
-                }
-
-                return option
-            }
-        }
-
         for (const parameter of this.parameters) {
-            if (parameter instanceof ParamParser.CmdParamString) {
-                builder.addStringOption(getSetupOptionFunc<Djs.SlashCommandStringOption>(parameter))
-            }
-            else if (parameter instanceof ParamParser.CmdParamInteger) {
-                builder.addIntegerOption(getSetupOptionFunc<Djs.SlashCommandIntegerOption>(parameter))
-            }
-            else if (parameter instanceof ParamParser.CmdParamNumber) {
-                builder.addNumberOption(getSetupOptionFunc<Djs.SlashCommandNumberOption>(parameter))
-            }
-            else if (parameter instanceof ParamParser.CmdParamBoolean) {
-                builder.addBooleanOption(getSetupOptionFunc<Djs.SlashCommandBooleanOption>(parameter))
-            }
-            else if (parameter instanceof ParamParser.CmdParamMentionable) {
-                builder.addMentionableOption(getSetupOptionFunc<Djs.SlashCommandMentionableOption>(parameter))
-            }
-            else if (parameter instanceof ParamParser.CmdParamChannel) {
-                builder.addChannelOption(getSetupOptionFunc<Djs.SlashCommandChannelOption>(parameter))
-            }
-            else if (parameter instanceof ParamParser.CmdParamRole) {
-                builder.addRoleOption(getSetupOptionFunc<Djs.SlashCommandRoleOption>(parameter))
-            }
-            else if (parameter instanceof ParamParser.CmdParamUser) {
-                builder.addUserOption(getSetupOptionFunc<Djs.SlashCommandUserOption>(parameter))
-            }
-            else if (parameter instanceof ParamParser.CmdParamAttachment) {
-                builder.addAttachmentOption(getSetupOptionFunc<Djs.SlashCommandAttachmentOption>(parameter))
-            }
+            parameter.addOptionToBuilder(builder)
         }
 
         return builder
