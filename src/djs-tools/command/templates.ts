@@ -7,7 +7,7 @@ import * as UseScope from "./use_scope"
 
 
 type ExecuteFunc<UseScopeT extends UseScope.UseScope> = (interaction: UseScope.UseScopeToInteractionMap<UseScopeT>) => Promise<void>
-type Params = readonly ParamParser.CmdParameter<boolean, ParamParser.ChoiceArrayGeneral<unknown>>[]
+type Params = readonly ParamParser.CmdParameter<unknown, boolean, ParamParser.Choices<unknown>>[]
 type UseCases<UseScopeT extends UseScope.UseScope> = readonly UseCase.UseCase<UseScopeT>[]
 
 
@@ -43,18 +43,18 @@ export class CmdTemplateGroup<UseScopeT extends UseScope.UseScope = UseScope.Use
     }
 
     public addSubTemplateGroup(args: Omit<CmdTemplateGroupArgs<UseScopeT>, "useScope">) {
-        const subTemplate = new CmdTemplateGroup({...args, useScope: this.useScope})
+        const subTemplate = new CmdTemplateGroup({ ...args, useScope: this.useScope })
         this.addSubTemplateGeneral(subTemplate)
         return subTemplate
     }
     public addSubTemplateLeaf(args: Omit<CmdTemplateLeafArgs<UseScopeT>, "useScope">) {
-        const subTemplate = new CmdTemplateLeaf({...args, useScope: this.useScope})
+        const subTemplate = new CmdTemplateLeaf({ ...args, useScope: this.useScope })
         this.addSubTemplateGeneral(subTemplate)
         return subTemplate
     }
 
 
-    public getSubTemplate(id: string) {return this.subTemplateMap.get(id)}
+    public getSubTemplate(id: string) { return this.subTemplateMap.get(id) }
 
 
     static subgroupCombine(cmdTemplateGroups: CmdTemplateGroup[]) {
@@ -115,7 +115,7 @@ export class CmdTemplateGroup<UseScopeT extends UseScope.UseScope = UseScope.Use
         }
 
 
-        type BuilderTreeThird = {template: CmdTemplateLeaf}
+        type BuilderTreeThird = { template: CmdTemplateLeaf }
 
         type BuilderTreeSecondNested = {
             template: CmdTemplateGroup,
@@ -129,27 +129,27 @@ export class CmdTemplateGroup<UseScopeT extends UseScope.UseScope = UseScope.Use
         }
 
         function createBuilderTree(startTemplate: CmdTemplateGroup, builderBranches: [...CmdTemplateGroup[], CmdTemplateLeaf][]) {
-            const tree: BuilderTreeRoot = {template: startTemplate, subs: [] as unknown as BuilderTreeRoot["subs"]}
+            const tree: BuilderTreeRoot = { template: startTemplate, subs: [] as unknown as BuilderTreeRoot["subs"] }
 
             for (const builderBranch of builderBranches) {
                 const cutBranch = builderBranch.slice(1, undefined)
                 if (cutBranch.length === 0) {
                     throw new Error("Branch length should never be 0.")
                 } else if (cutBranch.length === 1) {
-                    tree.subs.push({template: cutBranch[0] as CmdTemplateLeaf})
+                    tree.subs.push({ template: cutBranch[0] as CmdTemplateLeaf })
                 } else {
                     let hasDuplicate = false
                     for (const sub of tree.subs) {
                         if (sub.template instanceof CmdTemplateLeaf) continue
                         if (sub.template.id === cutBranch[0].id) {
-                            (sub as BuilderTreeSecondNested).subs.push({template: cutBranch[1] as CmdTemplateLeaf})
+                            (sub as BuilderTreeSecondNested).subs.push({ template: cutBranch[1] as CmdTemplateLeaf })
                             hasDuplicate = true
                             break
                         }
                     }
                     if (hasDuplicate) continue
 
-                    tree.subs.push({template: cutBranch[0] as CmdTemplateGroup, subs: [{template: cutBranch[1] as CmdTemplateLeaf}]})
+                    tree.subs.push({ template: cutBranch[0] as CmdTemplateGroup, subs: [{ template: cutBranch[1] as CmdTemplateLeaf }] })
                 }
             }
 
@@ -231,17 +231,17 @@ export class CmdTemplateLeaf<UseScopeT extends UseScope.UseScope = UseScope.UseS
             .setName(this.id)
             .setDescription(this.description)
 
-
-        function getSetupOptionFunc<T extends Djs.ApplicationCommandOptionBase>(parameter: ParamParser.CmdParameter<boolean, ParamParser.ChoiceArrayGeneral<string | number | undefined>>) {
+        // TODO move this to param_parser.ts
+        function getSetupOptionFunc<T extends Djs.ApplicationCommandOptionBase>(parameter: ParamParser.CmdParameter<unknown, boolean, ParamParser.Choices<string | number | undefined>>) {
             return (option: T) => {
                 option
-                .setName(parameter.name)
-                .setDescription(parameter.description)
-                .setRequired(parameter.required)
+                    .setName(parameter.name)
+                    .setDescription(parameter.description)
+                    .setRequired(parameter.required)
 
                 if (parameter.choices !== undefined)
                     (option as unknown as T extends Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<infer R> ? Djs.ApplicationCommandOptionWithChoicesAndAutocompleteMixin<R> : never)
-                    .addChoices(...(parameter.choices as NonNullable<ParamParser.ChoiceArrayGeneral<string | number>>))
+                        .addChoices(...(parameter.choices as NonNullable<ParamParser.Choices<string | number>>))
 
                 if (parameter instanceof ParamParser.CmdParamString) {
                     (option as unknown as Djs.SlashCommandStringOption)

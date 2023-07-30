@@ -1,24 +1,29 @@
 import Djs from "discord.js"
 
 import * as UseScope from "./use_scope"
+import * as OtherTypes from "../other_types"
 
 
 
 export type ChoiceOption<T> = {name: string, value: T}
-export type ChoiceArrayGeneral<T> = readonly ChoiceOption<T>[] | undefined
+export type Choices<T> = readonly ChoiceOption<T>[] | null
 
 
-export class CmdParameter<IsRequired extends boolean = boolean, ChoiceArray extends ChoiceArrayGeneral<unknown> = undefined> {
+export abstract class CmdParameter<
+    ValueType = unknown,
+    IsRequired extends boolean = boolean,
+    ChoicesT extends Choices<ValueType> = Choices<ValueType>
+> {
     public required: IsRequired
     public name: string
     public description: string
-    public choices: ChoiceArray
+    public choices: ChoicesT
 
     constructor(
         required: IsRequired,
         name: string,
         description: string,
-        choices: ChoiceArray
+        choices: ChoicesT = null as unknown as ChoicesT
     ) {
         this.required = required
         this.name = name
@@ -31,14 +36,16 @@ export class CmdParameter<IsRequired extends boolean = boolean, ChoiceArray exte
     public toGetterArgs(): [string, boolean] {
         return [this.name, this.required]
     }
+
+    public abstract getValue(options: OtherTypes.ChatInputCommandInteractionOptions): ValueType | null
 }
 
 
 
 export class CmdParamString<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral<unknown>
-> extends CmdParameter<IsRequired, ChoiceArray> {
+    ChoicesT extends Choices<string>
+> extends CmdParameter<string, IsRequired, ChoicesT> {
     private __nominalString() {}
 
     public min_chars: number = 1
@@ -48,6 +55,10 @@ export class CmdParamString<
         this.min_chars = min ?? this.min_chars
         this.max_chars = max ?? this.max_chars
         return this
+    }
+
+    public getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
+        return options.getString(...this.toGetterArgs())
     }
 }
 
@@ -60,8 +71,8 @@ interface ParamNumeric {
 
 export class CmdParamInteger<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral<unknown>
-> extends CmdParameter<IsRequired, ChoiceArray> implements ParamNumeric {
+    ChoicesT extends Choices<number>
+> extends CmdParameter<number, IsRequired, ChoicesT> implements ParamNumeric {
     private __nominalInt() {}
 
     public min_value: number | undefined = undefined
@@ -72,12 +83,16 @@ export class CmdParamInteger<
         this.max_value = max
         return this
     }
+
+    public getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
+        return options.getInteger(...this.toGetterArgs())
+    }
 }
 
 export class CmdParamNumber<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral<unknown>
-> extends CmdParameter<IsRequired, ChoiceArray> implements ParamNumeric {
+    ChoicesT extends Choices<number>
+> extends CmdParameter<number, IsRequired, ChoicesT> implements ParamNumeric {
     private __nominalNumber() {}
 
     public min_value: number | undefined = undefined
@@ -88,202 +103,118 @@ export class CmdParamNumber<
         this.max_value = max
         return this
     }
+
+    public getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
+        return options.getNumber(...this.toGetterArgs())
+    }
 }
 
 export class CmdParamBoolean<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral<unknown>
-> extends CmdParameter<IsRequired, ChoiceArray> {
+    ChoicesT extends Choices<boolean>
+> extends CmdParameter<boolean, IsRequired, ChoicesT> {
     private __nominalBoolean() {}
+
+    public getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
+        return options.getBoolean(...this.toGetterArgs())
+    }
 }
 
 
+export type CmdParamMentionableValue = NonNullable<ReturnType<OtherTypes.ChatInputCommandInteractionOptions["getMentionable"]>>
 export class CmdParamMentionable<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral<unknown>
-> extends CmdParameter<IsRequired, ChoiceArray> {
+    ChoicesT extends Choices<CmdParamMentionableValue>
+> extends CmdParameter<CmdParamMentionableValue, IsRequired, ChoicesT> {
     private __nominalMentionable() {}
+
+    public getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
+        return options.getMentionable(...this.toGetterArgs())
+    }
 }
 
+export type CmdParamChannelValue = NonNullable<ReturnType<OtherTypes.ChatInputCommandInteractionOptions["getChannel"]>>
 export class CmdParamChannel<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral<unknown>
-> extends CmdParameter<IsRequired, ChoiceArray> {
+    ChoicesT extends Choices<CmdParamChannelValue>
+> extends CmdParameter<CmdParamChannelValue, IsRequired, ChoicesT> {
     private __nominalChannel() {}
+
+    public getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
+        return options.getChannel(...this.toGetterArgs())
+    }
 }
 
+export type CmdParamRoleValue = Djs.Role | Djs.APIRole
 export class CmdParamRole<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral<unknown>
-> extends CmdParameter<IsRequired, ChoiceArray> {
+    ChoicesT extends Choices<CmdParamRoleValue>
+> extends CmdParameter<CmdParamRoleValue, IsRequired, ChoicesT> {
     private __nominalRole() {}
+
+    public getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
+        return options.getRole(...this.toGetterArgs())
+    }
 }
 
+export type CmdParamUserValue = Djs.User
 export class CmdParamUser<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral<unknown>
-> extends CmdParameter<IsRequired, ChoiceArray> {
+    ChoicesT extends Choices<CmdParamUserValue>
+> extends CmdParameter<CmdParamUserValue, IsRequired, ChoicesT> {
     private __nominalUser() {}
+
+    public getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
+        return options.getUser(...this.toGetterArgs())
+    }
 }
 
-
+export type CmdParamAttachmentValue = Djs.Attachment
 export class CmdParamAttachment<
     IsRequired extends boolean,
-    ChoiceArray extends ChoiceArrayGeneral<unknown>
-> extends CmdParameter<IsRequired, ChoiceArray> {
+    ChoicesT extends Choices<CmdParamAttachmentValue>
+> extends CmdParameter<CmdParamAttachmentValue, IsRequired, ChoicesT> {
     private __nominalAttachment() {}
+
+    public getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
+        return options.getAttachment(...this.toGetterArgs())
+    }
 }
 
 
-export enum ParamEnum {
-    string,
-    integer,
-    number,
-    boolean,
-    mentionable,
-    channel,
-    role,
-    user,
-    attachment
-}
 
-export type CmdParamEnumMap<ParamEnumT extends ParamEnum, IsRequired extends boolean, ChoicesT extends ChoiceArrayGeneral<unknown>> = (
-    ParamEnumT extends ParamEnum.string ? CmdParamString<IsRequired, ChoicesT>
-    : ParamEnumT extends ParamEnum.integer ? CmdParamInteger<IsRequired, ChoicesT>
-    : ParamEnumT extends ParamEnum.number ? CmdParamNumber<IsRequired, ChoicesT>
-    : ParamEnumT extends ParamEnum.boolean ? CmdParamBoolean<IsRequired, ChoicesT>
-    : ParamEnumT extends ParamEnum.mentionable ? CmdParamMentionable<IsRequired, ChoicesT>
-    : ParamEnumT extends ParamEnum.channel ? CmdParamChannel<IsRequired, ChoicesT>
-    : ParamEnumT extends ParamEnum.role ? CmdParamRole<IsRequired, ChoicesT>
-    : ParamEnumT extends ParamEnum.user ? CmdParamUser<IsRequired, ChoicesT>
-    : CmdParamAttachment<IsRequired, ChoicesT>
-)
-
-
-export type ParamToChoiceMap<ParamTypeEnum extends ParamEnum> = (
-    ParamTypeEnum extends ParamEnum.string ? readonly ChoiceOption<string>[]
-    : ParamTypeEnum extends ParamEnum.integer ? readonly ChoiceOption<number>[]
-    : ParamTypeEnum extends ParamEnum.number ? readonly ChoiceOption<number>[]
-    : undefined
-)
-
-export function createParameter<
-    IsRequired extends boolean,
-    ParamTypeEnum extends ParamEnum,
-    ChoiceArray extends ParamToChoiceMap<ParamTypeEnum> | undefined = undefined
->(
-    paramType: ParamTypeEnum,
-    required: IsRequired,
-    name: string,
-    description: string,
-    choices?: ChoiceArray
-) {
-    const args: ConstructorParameters<typeof CmdParameter<IsRequired, ChoiceArray | undefined>>
-        = [required, name, description, choices]
-
-    let parameter
-    if (paramType === ParamEnum.string) {parameter = new CmdParamString(...args)}
-    else if (paramType === ParamEnum.integer) {parameter = new CmdParamInteger(...args)}
-    else if (paramType === ParamEnum.number) {parameter = new CmdParamNumber(...args)}
-    else if (paramType === ParamEnum.boolean) {parameter = new CmdParamBoolean(...args)}
-    else if (paramType === ParamEnum.mentionable) {parameter = new CmdParamMentionable(...args)}
-    else if (paramType === ParamEnum.channel) {parameter = new CmdParamChannel(...args)}
-    else if (paramType === ParamEnum.role) {parameter = new CmdParamRole(...args)}
-    else if (paramType === ParamEnum.user) {parameter = new CmdParamUser(...args)}
-    else {parameter = new CmdParamAttachment(...args)}
-
-    return parameter as CmdParamEnumMap<ParamTypeEnum, IsRequired, ChoiceArray extends ParamToChoiceMap<ParamTypeEnum> ? ChoiceArray : undefined>
+export function createGenericChoice<ChoiceType extends string | number>(nameValue: ChoiceType): ChoiceOption<ChoiceType> {
+    return {
+        name: nameValue.toString(),
+        value: nameValue
+    }
 }
 
 
-export type ParamResult = (
-    string
-    | number
-    | boolean
-    | NonNullable<
-        Djs.GuildMember | Djs.APIInteractionDataResolvedGuildMember | Djs.Role | Djs.APIRole | Djs.User
-        | null | undefined
-    >
-    | Djs.ChannelType | Djs.CategoryChannel
-    | Djs.Role | Djs.APIRole
-    | Djs.User
-    | Djs.Attachment
-    | null
+
+type ValueOrChoiceMap<ValueType, ChoicesT extends Choices<ValueType>> = (
+    ChoicesT extends null ? ValueType : NonNullable<ChoicesT>[number]["value"]
 )
 
-
-export type ParamToResultMap<T extends CmdParameter<boolean, ChoiceArrayGeneral<unknown>>> =
-    T extends CmdParameter<infer IsRequired, infer ChoiceArray> ? (
-        ChoiceArray extends undefined ? (
-            T extends CmdParamString<IsRequired, ChoiceArray> ? string | null
-            : T extends CmdParamInteger<IsRequired, ChoiceArray> ? number | null
-            : T extends CmdParamNumber<IsRequired, ChoiceArray> ? number | null
-            : T extends CmdParamBoolean<IsRequired, ChoiceArray> ? boolean | null
-            : T extends CmdParamMentionable<IsRequired, ChoiceArray> ?
-                NonNullable<
-                    Djs.GuildMember | Djs.APIInteractionDataResolvedGuildMember | Djs.Role | Djs.APIRole | Djs.User
-                    | null | undefined
-                > | null
-            : T extends CmdParamChannel<IsRequired, ChoiceArray> ? Djs.ChannelType | Djs.CategoryChannel | null
-            : T extends CmdParamRole<IsRequired, ChoiceArray> ? Djs.Role | Djs.APIRole | null
-            : T extends CmdParamUser<IsRequired, ChoiceArray> ? Djs.User | null
-            : Djs.Attachment | null
-        ) : {
-            [Choice in keyof NonNullable<ChoiceArray>]: NonNullable<ChoiceArray>[Choice] extends ChoiceOption<infer R> ? R : never
-        }[number]
+type ParamsToValueMap<CmdParameters extends readonly CmdParameter[]> = {
+    [P in keyof CmdParameters]: CmdParameters[P] extends CmdParameter<infer ValueType, infer IsRequired, infer ChoiceArrayT> ? (
+        IsRequired extends true ? ValueOrChoiceMap<ValueType, ChoiceArrayT> : ValueOrChoiceMap<ValueType, ChoiceArrayT> | null
     ) : never
-
-export type ParamToNullMap<T extends CmdParameter<boolean, ChoiceArrayGeneral<unknown>>> =
-    T extends CmdParameter<infer IsRequired, ChoiceArrayGeneral<unknown>> ? (
-        IsRequired extends true ? NonNullable<ParamToResultMap<T>> : ParamToResultMap<T>
-    ) : never
-
-
-export type ParamsMap<T extends readonly CmdParameter<boolean, ChoiceArrayGeneral<unknown>>[]> = {
-    [P in keyof T]: ParamToNullMap<T[P]>
 }
 
 
 
 
 export function getParameterValues<
-    Parameters extends readonly CmdParameter<boolean, ChoiceArrayGeneral<unknown>>[],
+    Parameters extends readonly CmdParameter[],
 >(
     interaction: UseScope.AllScopedCommandInteraction,
     parameters: Parameters,
-): ParamsMap<Parameters> {
-    const options = interaction.options
-
+): ParamsToValueMap<Parameters> {
     const results = []
-
     for (const parameter of parameters) {
-        const getterArgs = parameter.toGetterArgs()
-        let result: ParamResult
-
-        if (parameter instanceof CmdParamString) {
-            result = options.getString(...getterArgs)
-        } else if (parameter instanceof CmdParamInteger) {
-            result = options.getInteger(...getterArgs)
-        } else if (parameter instanceof CmdParamNumber) {
-            result = options.getNumber(...getterArgs)
-        } else if (parameter instanceof CmdParamBoolean) {
-            result = options.getBoolean(...getterArgs)
-        } else if (parameter instanceof CmdParamMentionable) {
-            result = options.getMentionable(...getterArgs)
-        } else if (parameter instanceof CmdParamChannel) {
-            result = options.getChannel(...getterArgs)
-        } else if (parameter instanceof CmdParamRole) {
-            result = options.getRole(...getterArgs)
-        } else if (parameter instanceof CmdParamUser) {
-            result = options.getUser(...getterArgs)
-        } else if (parameter instanceof CmdParamAttachment) {
-            result = options.getAttachment(...getterArgs)
-        } else {
-            throw "Invalid parameter!"
-        }
-
-        results.push(result)
+        results.push(parameter.getValue(interaction.options))
     }
 
-    return results as ParamsMap<Parameters>
+    return results as ParamsToValueMap<Parameters>
 }
