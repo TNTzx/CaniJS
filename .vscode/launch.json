@@ -1,29 +1,34 @@
 {
-	// Use IntelliSense to learn about possible attributes.
-	// Hover to view descriptions of existing attributes.
-	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-	"version": "0.2.0",
-	"configurations": [
-		{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
             "type": "node",
             "request": "launch",
             "name": "Login",
             "skipFiles": [
-                "<node_internals>/**"
+                "${workspaceFolder}/<node_internals>/**",
+                "${workspaceFolder}/node_modules/**"
             ],
             "program": "${workspaceFolder}/src/index.ts",
             "runtimeArgs": [
-                "-r", "ts-node/register",
-                "-r", "tsconfig-paths/register"
+                "-r",
+                "ts-node/register",
+                "-r",
+                "tsconfig-paths/register"
             ],
-            "args": ["--login", "--dev"],
+            "args": [
+                "--login",
+                "--dev"
+            ],
             "console": "integratedTerminal",
             "outFiles": [
                 "${workspaceFolder}/**/*.js",
                 "!**/node_modules/**"
             ]
         },
-
         {
             "type": "node",
             "request": "launch",
@@ -33,17 +38,21 @@
             ],
             "program": "${workspaceFolder}/src/index.ts",
             "runtimeArgs": [
-                "-r", "ts-node/register",
-                "-r", "tsconfig-paths/register"
+                "-r",
+                "ts-node/register",
+                "-r",
+                "tsconfig-paths/register"
             ],
-            "args": ["--deploy-cmds-guild", "--dev"],
+            "args": [
+                "--deploy-cmds-guild",
+                "--dev"
+            ],
             "console": "integratedTerminal",
             "outFiles": [
                 "${workspaceFolder}/**/*.js",
                 "!**/node_modules/**"
-            ]
+            ],
         },
-
         {
             "type": "node",
             "request": "launch",
@@ -53,15 +62,20 @@
             ],
             "program": "${workspaceFolder}/src/index.ts",
             "runtimeArgs": [
-                "-r", "ts-node/register",
-                "-r", "tsconfig-paths/register"
+                "-r",
+                "ts-node/register",
+                "-r",
+                "tsconfig-paths/register"
             ],
-            "args": ["--deploy-cmds-global", "--dev"],
+            "args": [
+                "--deploy-cmds-global",
+                "--dev"
+            ],
             "console": "integratedTerminal",
             "outFiles": [
                 "${workspaceFolder}/**/*.js",
                 "!**/node_modules/**"
             ]
         },
-	]
+    ]
 }
