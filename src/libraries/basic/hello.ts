@@ -6,7 +6,7 @@ export const cmdHello = new DjsTools.CmdTemplateLeaf({
     id: "hello",
     description: "Says hello! Dog!",
     useScope: DjsTools.useScopeAll,
-    executeFunc: async (interaction) => {
+    async executeFunc(interaction, _args) {
         await interaction.reply("Hellooo! :D")
     }
 })

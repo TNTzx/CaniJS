@@ -37,9 +37,11 @@ async function editAdminRole(guildSid: string, adminRoleSid: string) {
 
 
 const paramSetAdmin = [
-    new DjsTools.CmdParamRole(
-        true, "admin-role", "The new admin role."
-    )
+    new DjsTools.CmdParamRole({
+        required: true,
+        name: "admin-role",
+        description: "The new admin role."
+    })
 ] as const
 export const cmdSetAdmin = new DjsTools.CmdTemplateLeaf({
     id: "set-admin",
@@ -48,18 +50,16 @@ export const cmdSetAdmin = new DjsTools.CmdTemplateLeaf({
     parameters: paramSetAdmin,
     useCases: [DjsTools.caseServerOwner],
 
-    async executeFunc(interaction) {
-        const parameters = DjsTools.getParameterValues(interaction, paramSetAdmin)
-
-        await interaction.editReply(`Setting admin to ${Djs.inlineCode(parameters[0].name)}...`)
+    async executeFunc(interaction, args) {
+        await interaction.editReply(`Setting admin to ${Djs.inlineCode(args[0].name)}...`)
 
         const currentAdminRoleSid = await getAdminRoleSid(interaction.guild.id)
-        if (currentAdminRoleSid === parameters[0].id) {
+        if (currentAdminRoleSid === args[0].id) {
             await interaction.followUp("That role is already the admin role set for this server!")
             return
         }
 
-        await editAdminRole(interaction.guild.id, parameters[0].id)
+        await editAdminRole(interaction.guild.id, args[0].id)
 
         await interaction.followUp("The admin role for this server has been set.")
     }

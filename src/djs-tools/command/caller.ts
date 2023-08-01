@@ -95,7 +95,7 @@ export function addCmdCaller(client: Djs.Client) {
 
 
         try {
-            await effectiveTemplate.template.executeFunc(interaction)
+            await effectiveTemplate.template.runCmd(interaction)
         } catch (error) {
             console.error(error)
 

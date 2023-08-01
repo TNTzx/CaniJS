@@ -8,11 +8,25 @@ import * as OtherTypes from "../other_types"
 export type ChoiceOption<T extends string | number = string | number> = {name: string, value: T}
 export type Choices<T extends string | number = string | number> = readonly ChoiceOption<T>[] | null
 
+type IsRequiredMap<ValueTypeT, IsRequired extends boolean> = IsRequired extends true ? ValueTypeT : ValueTypeT | null
+
 type Builder = Djs.SlashCommandBuilder | Djs.SlashCommandSubcommandBuilder
 type BuilderReturned = Djs.SlashCommandSubcommandBuilder | Omit<Djs.SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">
 
+
+
+type CmdParameterArgs<
+    IsRequired extends boolean,
+    ChoicesT extends Choices | null
+> = {
+    required: IsRequired,
+    name: string,
+    description: string,
+    choices?: ChoicesT,
+}
 export abstract class CmdParameter<
-    ValueType = unknown,
+    ValueTypeT = unknown,
+    AssertedValueTypeT = unknown,
     IsRequired extends boolean = boolean,
     ChoicesT extends Choices | null = Choices,
     BuilderOption extends Djs.ApplicationCommandOptionBase = Djs.ApplicationCommandOptionBase
@@ -22,17 +36,11 @@ export abstract class CmdParameter<
     public description: string
     public choices: ChoicesT
 
-    constructor(
-        required: IsRequired,
-        name: string,
-        description: string,
-        choices: ChoicesT = null as unknown as ChoicesT
-    ) {
-        this.required = required
-        this.name = name
-        this.description = description
-
-        this.choices = choices
+    constructor(args: CmdParameterArgs<IsRequired, ChoicesT>) {
+        this.required = args.required
+        this.name = args.name
+        this.description = args.description
+        this.choices = args.choices ?? null as unknown as ChoicesT
     }
 
 
@@ -40,7 +48,17 @@ export abstract class CmdParameter<
         return [this.name, this.required]
     }
 
-    public abstract getValue(interactionOptions: OtherTypes.ChatInputCommandInteractionOptions): ValueType | null
+    public abstract getValue(interactionOptions: OtherTypes.ChatInputCommandInteractionOptions): ValueTypeT | null
+
+
+    protected async assertFunc(value: ValueTypeT): Promise<string | AssertedValueTypeT> {
+        return value as unknown as AssertedValueTypeT
+    }
+
+    public async assertValue(value: ValueTypeT): Promise<string | AssertedValueTypeT> {
+        return await this.assertFunc(value)
+    }
+
 
     public setupBuilderOption(option: BuilderOption) {
         option
@@ -64,7 +82,7 @@ export abstract class CmdParameter<
 export class CmdParamString<
     IsRequired extends boolean,
     ChoicesT extends Choices<string>
-> extends CmdParameter<string, IsRequired, ChoicesT, Djs.SlashCommandStringOption> {
+> extends CmdParameter<string, string, IsRequired, ChoicesT, Djs.SlashCommandStringOption> {
     private __nominalString() {}
 
     public min_chars: number = 1
@@ -111,7 +129,7 @@ function setupBuilderOptionNumeric<
 export class CmdParamInteger<
     IsRequired extends boolean,
     ChoicesT extends Choices<number>
-> extends CmdParameter<number, IsRequired, ChoicesT, Djs.SlashCommandIntegerOption> implements ParamNumeric {
+> extends CmdParameter<number, number, IsRequired, ChoicesT, Djs.SlashCommandIntegerOption> implements ParamNumeric {
     private __nominalInt() {}
 
     public min_value: number | null = null
@@ -140,7 +158,7 @@ export class CmdParamInteger<
 export class CmdParamNumber<
     IsRequired extends boolean,
     ChoicesT extends Choices<number>
-> extends CmdParameter<number, IsRequired, ChoicesT, Djs.SlashCommandNumberOption> implements ParamNumeric {
+> extends CmdParameter<number, number, IsRequired, ChoicesT, Djs.SlashCommandNumberOption> implements ParamNumeric {
     private __nominalNumber() {}
 
     public min_value: number | null = null
@@ -167,7 +185,7 @@ export class CmdParamNumber<
 
 export class CmdParamBoolean<
     IsRequired extends boolean,
-> extends CmdParameter<boolean, IsRequired, null, Djs.SlashCommandBooleanOption> {
+> extends CmdParameter<boolean, boolean, IsRequired, null, Djs.SlashCommandBooleanOption> {
     private __nominalBoolean() {}
 
     public override getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
@@ -183,7 +201,7 @@ export class CmdParamBoolean<
 export type CmdParamMentionableValue = NonNullable<ReturnType<OtherTypes.ChatInputCommandInteractionOptions["getMentionable"]>>
 export class CmdParamMentionable<
     IsRequired extends boolean,
-> extends CmdParameter<CmdParamMentionableValue, IsRequired, null, Djs.SlashCommandMentionableOption> {
+> extends CmdParameter<CmdParamMentionableValue, CmdParamMentionableValue, IsRequired, null, Djs.SlashCommandMentionableOption> {
     private __nominalMentionable() {}
 
     public override getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
@@ -196,14 +214,80 @@ export class CmdParamMentionable<
 }
 
 export type CmdParamChannelValue = NonNullable<ReturnType<OtherTypes.ChatInputCommandInteractionOptions["getChannel"]>>
+
+export enum ChannelRestrict {
+    Text = Djs.ChannelType.GuildText,
+    DM = Djs.ChannelType.DM,
+    Voice = Djs.ChannelType.GuildVoice,
+    Category = Djs.ChannelType.GuildCategory,
+    PublicThread = Djs.ChannelType.PublicThread,
+    PrivateThread = Djs.ChannelType.PrivateThread,
+    Stage = Djs.ChannelType.GuildStageVoice,
+    Forum = Djs.ChannelType.GuildForum
+}
+
+type ChannelRestrictsMap<ValidChannelTypes extends ChannelRestrict[]> = (
+    {[P in keyof ValidChannelTypes]: ChannelEnumToRestrictMap<ValidChannelTypes[P]>}[number]
+)
+type ChannelRestrictsOptionalMap<ValidChannelTypes extends ChannelRestrict[] | null> = (
+    ValidChannelTypes extends ChannelRestrict[]
+        ? ChannelRestrictsMap<ValidChannelTypes>
+        : CmdParamChannelValue
+)
+type ChannelEnumToRestrictMap<ChannelType extends ChannelRestrict> = (
+    ChannelType extends ChannelRestrict.Text ? Djs.TextChannel :
+    ChannelType extends ChannelRestrict.DM ? Djs.DMChannel :
+    ChannelType extends ChannelRestrict.Voice ? Djs.VoiceChannel :
+    ChannelType extends ChannelRestrict.Category ? Djs.CategoryChannel :
+    ChannelType extends ChannelRestrict.PublicThread ? Djs.PublicThreadChannel<boolean> :
+    ChannelType extends ChannelRestrict.PrivateThread ? Djs.PrivateThreadChannel :
+    ChannelType extends ChannelRestrict.Stage ? Djs.StageChannel :
+    ChannelType extends ChannelRestrict.Forum ? Djs.ForumChannel :
+    never
+)
+const channelEnumToStringMap = {
+    [ChannelRestrict.Text]: "text",
+    [ChannelRestrict.DM]: "DM",
+    [ChannelRestrict.Voice]: "voice",
+    [ChannelRestrict.Category]: "category",
+    [ChannelRestrict.PublicThread]: "public thread",
+    [ChannelRestrict.PrivateThread]: "private thread",
+    [ChannelRestrict.Stage]: "stage",
+    [ChannelRestrict.Forum]: "forum"
+}
 export class CmdParamChannel<
+    ChannelRestrictsT extends ChannelRestrict[] | null,
+    ValueTypeT extends CmdParamChannelValue,
+    AssertedValueTypeT extends ChannelRestrictsOptionalMap<ChannelRestrictsT>,
     IsRequired extends boolean,
-> extends CmdParameter<CmdParamChannelValue, IsRequired, null, Djs.SlashCommandChannelOption> {
+> extends CmdParameter<ValueTypeT, AssertedValueTypeT, IsRequired, null, Djs.SlashCommandChannelOption> {
     private __nominalChannel() {}
 
-    public override getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
-        return options.getChannel(...this.toGetValueArgs())
+    public validChannelTypes: ChannelRestrictsT
+
+    constructor(args: CmdParameterArgs<IsRequired, null> & {validChannelTypes?: ChannelRestrictsT}) {
+        super(args)
+        this.validChannelTypes = args.validChannelTypes ?? null as unknown as ChannelRestrictsT
     }
+
+    public override getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
+        return options.getChannel(...this.toGetValueArgs()) as ValueTypeT
+    }
+
+    protected override async assertFunc(value: ValueTypeT): Promise<string | AssertedValueTypeT> {
+        const validatedValue = value as unknown as AssertedValueTypeT
+        if (this.validChannelTypes === null) return validatedValue
+
+        if (this.validChannelTypes.includes(value.type as number)) return validatedValue
+        return "The channel is not a channel of the correct type." + (
+            this.validChannelTypes.length === 1
+                ? `You must input a ${channelEnumToStringMap[this.validChannelTypes[0]]} channel.`
+                : `You must input a channel of one of these types: ${
+                    this.validChannelTypes.map(validChannelType => channelEnumToStringMap[validChannelType] + "channel").join(", ")
+                }`
+        )
+    }
+
 
     public override addOptionToBuilder(builder: Builder): BuilderReturned {
         return builder.addChannelOption(this.setupBuilderOption.bind(this))
@@ -213,7 +297,7 @@ export class CmdParamChannel<
 export type CmdParamRoleValue = Djs.Role | Djs.APIRole
 export class CmdParamRole<
     IsRequired extends boolean,
-> extends CmdParameter<CmdParamRoleValue, IsRequired, null, Djs.SlashCommandRoleOption> {
+> extends CmdParameter<CmdParamRoleValue, CmdParamRoleValue, IsRequired, null, Djs.SlashCommandRoleOption> {
     private __nominalRole() {}
 
     public override getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
@@ -228,7 +312,7 @@ export class CmdParamRole<
 export type CmdParamUserValue = Djs.User
 export class CmdParamUser<
     IsRequired extends boolean,
-> extends CmdParameter<CmdParamUserValue, IsRequired, null, Djs.SlashCommandUserOption> {
+> extends CmdParameter<CmdParamUserValue, CmdParamUserValue, IsRequired, null, Djs.SlashCommandUserOption> {
     private __nominalUser() {}
 
     public override getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
@@ -243,7 +327,7 @@ export class CmdParamUser<
 export type CmdParamAttachmentValue = Djs.Attachment
 export class CmdParamAttachment<
     IsRequired extends boolean,
-> extends CmdParameter<CmdParamAttachmentValue, IsRequired, null, Djs.SlashCommandAttachmentOption> {
+> extends CmdParameter<CmdParamAttachmentValue, CmdParamAttachmentValue, IsRequired, null, Djs.SlashCommandAttachmentOption> {
     private __nominalAttachment() {}
 
     public override getValue(options: OtherTypes.ChatInputCommandInteractionOptions) {
@@ -266,23 +350,23 @@ export function createGenericChoice<ChoiceType extends string | number>(nameValu
 
 
 
-type ValueOrChoiceMap<ValueType, ChoicesT extends Choices<string | number>> = (
-    ChoicesT extends null ? ValueType : NonNullable<ChoicesT>[number]["value"]
+type ValueOrChoiceMap<AssertedValueTypeT, ChoicesT extends Choices<string | number>> = (
+    ChoicesT extends null ? AssertedValueTypeT : NonNullable<ChoicesT>[number]["value"]
 )
 
-type ParamsToValueMap<CmdParameters extends readonly CmdParameter[]> = {
+
+
+export type ParamsToValueMap<CmdParameters extends readonly CmdParameter[]> = {
     [P in keyof CmdParameters]:
         CmdParameters[P] extends CmdParameter<
-            infer ValueType,
+            infer _ValueTypeT,
+            infer AssertedValueTypeT,
             infer IsRequired,
             infer ChoiceArrayT extends Choices<string | number> | null
         > ? (
-        IsRequired extends true ? ValueOrChoiceMap<ValueType, ChoiceArrayT> : ValueOrChoiceMap<ValueType, ChoiceArrayT> | null
+            IsRequiredMap<ValueOrChoiceMap<AssertedValueTypeT, ChoiceArrayT>, IsRequired>
     ) : never
 }
-
-
-
 
 export function getParameterValues<
     Parameters extends readonly CmdParameter[],

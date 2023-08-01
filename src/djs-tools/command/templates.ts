@@ -6,8 +6,13 @@ import * as UseScope from "./use_scope"
 
 
 
-type ExecuteFunc<UseScopeT extends UseScope.UseScope> = (interaction: UseScope.UseScopeToInteractionMap<UseScopeT>) => Promise<void>
-type Params = readonly ParamParser.CmdParameter<unknown, boolean, ParamParser.Choices<string | number>>[]
+type Params = readonly ParamParser.CmdParameter[] | null
+type ParamValueMap<ParamsT extends Params> = ParamsT extends readonly ParamParser.CmdParameter[] ? ParamParser.ParamsToValueMap<ParamsT> : null
+type ExecuteFunc<UseScopeT extends UseScope.UseScope, ParamsT extends Params> =
+    (
+        interaction: UseScope.UseScopeToInteractionMap<UseScopeT>,
+        args: ParamValueMap<ParamsT>
+    ) => Promise<void>
 type UseCases<UseScopeT extends UseScope.UseScope> = readonly UseCase.UseCase<UseScopeT>[]
 
 
@@ -47,9 +52,9 @@ export class CmdTemplateGroup<UseScopeT extends UseScope.UseScope = UseScope.Use
         this.addSubTemplateGeneral(subTemplate)
         return subTemplate
     }
-    public addSubTemplateLeaf(args: Omit<CmdTemplateLeafArgs<UseScopeT>, "useScope">) {
-        const subTemplate = new CmdTemplateLeaf({ ...args, useScope: this.useScope })
-        this.addSubTemplateGeneral(subTemplate)
+    public addSubTemplateLeaf<Parameters extends Params>(args: Omit<CmdTemplateLeafArgs<UseScopeT, Parameters>, "useScope">) {
+        const subTemplate = new CmdTemplateLeaf<UseScopeT, Parameters>({ ...args, useScope: this.useScope })
+        this.addSubTemplateGeneral(subTemplate as unknown as CmdTemplateLeaf<UseScopeT>)
         return subTemplate
     }
 
@@ -200,29 +205,58 @@ export class CmdTemplateGroup<UseScopeT extends UseScope.UseScope = UseScope.Use
 
 
 
-type CmdTemplateLeafArgs<UseScopeT extends UseScope.UseScope> = {
+type CmdTemplateLeafArgs<UseScopeT extends UseScope.UseScope, ParamsT extends Params> = {
     id: string
     description: string
     useScope: UseScopeT
-    parameters?: Params
+    parameters?: ParamsT
     useCases?: UseCases<UseScopeT>
-    executeFunc: ExecuteFunc<UseScopeT>
+    executeFunc: ExecuteFunc<UseScopeT, ParamsT>
 }
-export class CmdTemplateLeaf<UseScopeT extends UseScope.UseScope = UseScope.UseScope> {
+export class CmdTemplateLeaf<UseScopeT extends UseScope.UseScope = UseScope.UseScope, ParamsT extends Params = null> {
     public id: string
     public description: string
     public useScope: UseScopeT
-    public parameters: Params
+    public parameters: ParamsT
     public useCases: UseCases<UseScopeT>
-    public executeFunc: ExecuteFunc<UseScopeT>
+    private executeFunc: ExecuteFunc<UseScopeT, ParamsT>
 
-    constructor(args: CmdTemplateLeafArgs<UseScopeT>) {
+    constructor(args: CmdTemplateLeafArgs<UseScopeT, ParamsT>) {
         this.id = args.id
         this.description = args.description
         this.useScope = args.useScope
-        this.parameters = args.parameters ?? []
+        this.parameters = args.parameters ?? null as unknown as ParamsT
         this.useCases = args.useCases ?? []
         this.executeFunc = args.executeFunc
+    }
+
+
+    public async runCmd(interaction: UseScope.UseScopeToInteractionMap<UseScopeT>) {
+        let args
+        if (this.parameters !== null) {
+            this.parameters = this.parameters as NonNullable<ParamsT>
+            args = ParamParser.getParameterValues(interaction, this.parameters)
+            for (let idx = 0; idx < args.length; idx++) {
+                const parameter = this.parameters[idx]
+                const arg = args[idx]
+
+                if (arg === null && parameter.required) {
+                    await interaction.editReply(`${Djs.inlineCode(parameter.name)} is a required parameter.`)
+                    return
+                }
+
+                if (arg === null) continue
+                const result = await parameter.assertValue(arg)
+                if (typeof result === "string") {
+                    await interaction.editReply(`You've inputted an incorrect argument for ${Djs.inlineCode(parameter.name)}: ${result}`)
+                    return
+                }
+            }
+        } else {
+            args = null
+        }
+
+        await this.executeFunc(interaction, args as ParamValueMap<ParamsT>)
     }
 
 
@@ -231,8 +265,10 @@ export class CmdTemplateLeaf<UseScopeT extends UseScope.UseScope = UseScope.UseS
             .setName(this.id)
             .setDescription(this.description)
 
-        for (const parameter of this.parameters) {
-            parameter.addOptionToBuilder(builder)
+        if (this.parameters !== null) {
+            for (const parameter of this.parameters) {
+                parameter.addOptionToBuilder(builder)
+            }
         }
 
         return builder

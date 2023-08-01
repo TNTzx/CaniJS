@@ -8,13 +8,21 @@ import * as PrismaLocal from "./prisma"
 
 
 const paramRegister = [
-    new DjsTools.CmdParamString(
-        true,
-        "action", "The action to do.", [
-            DjsTools.createGenericChoice("wa"),
-            DjsTools.createGenericChoice("wae")
+    new DjsTools.CmdParamString({
+        required: true,
+        name: "action",
+        description: "The action to do.",
+        choices: [
+            DjsTools.createGenericChoice("add"),
+            DjsTools.createGenericChoice("remove")
         ]
-    )
+    }),
+    new DjsTools.CmdParamChannel({
+        required: true,
+        name: "channel",
+        description: "The channel to add / remove as a claimable channel.",
+        validChannelTypes: [DjsTools.ChannelRestrict.Text]
+    })
 ] as const
 
 export const cmdRegister = CmdGroup.cmdGroupChannelClaiming.addSubTemplateLeaf({
@@ -22,8 +30,7 @@ export const cmdRegister = CmdGroup.cmdGroupChannelClaiming.addSubTemplateLeaf({
     description: "Edits the channels able to be claimed.",
     parameters: paramRegister,
     useCases: [Moderation.caseIsAdmin],
-    async executeFunc(interaction) {
-        const parameters = DjsTools.getParameterValues(interaction, paramRegister)
+    async executeFunc(interaction, args) {
         const registeredChannels = PrismaLocal.getClaimableChannels(interaction.guild.id)
 
     },
