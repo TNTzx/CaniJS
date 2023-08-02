@@ -3,13 +3,14 @@ import * as CmdTemplates from "./templates"
 
 
 const registeredCmdTemplateMap: Map<string, CmdTemplates.CmdTemplateType> = new Map()
-export function registerCmdTemplate(cmdTemplate: CmdTemplates.CmdTemplateType) {
-    if (registeredCmdTemplateMap.has(cmdTemplate.id)) throw new Error(`Command ${cmdTemplate} already registered.`)
+export function registerCmdTemplate<CmdTemplateT>(cmdTemplate: CmdTemplateT) {
+    const typedCmdTemplate = cmdTemplate as CmdTemplates.CmdTemplateType
+    if (registeredCmdTemplateMap.has(typedCmdTemplate.id)) throw new Error(`Command ${cmdTemplate} already registered.`)
 
-    registeredCmdTemplateMap.set(cmdTemplate.id, cmdTemplate)
+    registeredCmdTemplateMap.set(typedCmdTemplate.id, typedCmdTemplate)
 }
 
-export function registerAllCmdTemplates(cmdTemplates: (CmdTemplates.CmdTemplateType)[]) {
+export function registerAllCmdTemplates<CmdTemplateT>(cmdTemplates: (CmdTemplateT)[]) {
     for (const cmdTemplate of cmdTemplates) registerCmdTemplate(cmdTemplate)
 }
 

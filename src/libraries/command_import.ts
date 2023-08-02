@@ -7,27 +7,21 @@ import Test from "./test/test"
 
 
 
-let commandList: DjsTools.CmdTemplateType[] = [
+const commandList = [
     Basic.cmdHello,
     Moderation.cmdSetAdmin
 ]
 
-
-if (DjsTools.getDevEnvStatus()) {
-    import("./test/test").then((Test) => {
-        const commandListTests = Test.default
-        commandList = commandList.concat(commandListTests)
-    }).catch(() => {})
-}
+const commandListTest = [...commandList, ...Test]
 
 
 export default () => {
-    let fullCommandList: DjsTools.CmdTemplateType[]
+    let allCommands
     if (DjsTools.getDevEnvStatus()) {
-        fullCommandList = commandList.concat(Test)
+        allCommands = commandListTest
     } else {
-        fullCommandList = commandList
+        allCommands = commandList
     }
 
-    DjsTools.registerAllCmdTemplates(fullCommandList)
+    DjsTools.registerAllCmdTemplates(allCommands)
 }

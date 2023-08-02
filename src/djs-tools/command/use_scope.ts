@@ -26,6 +26,7 @@ export interface DMCommandInteraction
 
 export type AllScopedCommandInteraction = Djs.ChatInputCommandInteraction | GuildCommandInteraction | DMCommandInteraction
 
+export type MergeScopeCommandInteraction = Djs.ChatInputCommandInteraction & GuildCommandInteraction & DMCommandInteraction
 
 export type UseScopeToInteractionMap<UseScopeT extends UseScope<boolean, boolean>> = (
     UseScopeT extends UseScope<true, true>
