@@ -1,5 +1,6 @@
 import Djs from "discord.js"
 
+import * as OtherTypes from "../other_types"
 import * as ParamParser from "./param_parser"
 import * as UseCase from "./use_case"
 import * as UseScope from "./use_scope"
@@ -236,8 +237,16 @@ export class CmdTemplateLeaf<UseScopeT extends UseScope.UseScope = UseScope.UseS
         if (this.parameters !== null) {
             this.parameters = this.parameters as NonNullable<ParamsT>
             args = await ParamParser.getParameterValues(interaction, this.parameters)
+            if (args[0] instanceof OtherTypes.AssertFailInfo) {
+                args = args as OtherTypes.AssertFailInfo[]
+                const failMessages: string[] = args.map(arg => arg.message)
+                return new OtherTypes.AssertFailInfo(
+                    Djs.bold("You have given incorrect arguments for these parameters:\n") +
+                    failMessages.join("\n")
+                )
+            }
         } else {
-            args = null
+            args = undefined
         }
 
         await this.executeFunc(...[interaction, args] as Parameters<ExecuteFunc<UseScopeT, ParamsT>>)

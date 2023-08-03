@@ -1,5 +1,6 @@
 import Djs from "discord.js"
 
+import * as OtherTypes from "../other_types"
 import * as UseCase from "./use_case"
 import * as Templates from "./templates"
 import * as Registerer from "./registerer"
@@ -100,7 +101,10 @@ export function addCmdCaller(client: Djs.Client) {
 
 
         try {
-            await effectiveTemplate.template.runCmd(interaction)
+            const result = await effectiveTemplate.template.runCmd(interaction)
+            if (result instanceof OtherTypes.AssertFailInfo) {
+                await interaction.editReply(result.message)
+            }
         } catch (error) {
             console.error(error)
 

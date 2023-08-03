@@ -50,7 +50,9 @@ export abstract class CmdParameter<
 
         if (value !== null) {
             const assertResult = await this.assertValue(value)
-            if (assertResult !== null) return assertResult
+            if (assertResult !== null) return new OtherTypes.AssertFailInfo(
+                `${Djs.inlineCode(this.name)}: ${assertResult.message}`
+            )
         }
 
         return value as IsRequiredMap<ValueTypeT, IsRequired>
@@ -332,7 +334,7 @@ export class CmdParamChannel<
         if (this.validChannelTypes.includes(value.type as number)) return null
 
         return new OtherTypes.AssertFailInfo(
-            "The channel is not a channel of the correct type." + (
+            "The channel is not a channel of the correct type. " + (
                 this.validChannelTypes.length === 1
                     ? `You must input a ${channelEnumToStringMap[this.validChannelTypes[0]]} channel.`
                     : `You must input a channel of one of these types: ${
@@ -443,11 +445,14 @@ export async function getParameterValues<
 >(
     interaction: UseScope.AllScopedCommandInteraction,
     parameters: Parameters,
-): Promise<ParamsToValueMap<Parameters>> {
+): Promise<ParamsToValueMap<Parameters> | OtherTypes.AssertFailInfo[]> {
     const results = []
     for (const parameter of parameters) {
         results.push(await parameter.getValue(interaction.options))
     }
+
+    const assertFailInfos = results.filter(result => result instanceof OtherTypes.AssertFailInfo) as OtherTypes.AssertFailInfo[]
+    if (assertFailInfos.length > 0) return assertFailInfos
 
     return results as ParamsToValueMap<Parameters>
 }
