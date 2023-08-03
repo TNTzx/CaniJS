@@ -12,10 +12,10 @@ const paramRegister = [
         required: true,
         name: "action",
         description: "The action to do.",
-        choices: [
+        choiceManager: new DjsTools.ChoiceManager([
             DjsTools.createGenericChoice("add"),
             DjsTools.createGenericChoice("remove")
-        ]
+        ])
     }),
     new DjsTools.CmdParamChannel({
         required: true,

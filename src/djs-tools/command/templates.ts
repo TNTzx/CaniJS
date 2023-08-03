@@ -235,7 +235,7 @@ export class CmdTemplateLeaf<UseScopeT extends UseScope.UseScope = UseScope.UseS
         let args
         if (this.parameters !== null) {
             this.parameters = this.parameters as NonNullable<ParamsT>
-            args = ParamParser.getParameterValues(interaction, this.parameters)
+            args = await ParamParser.getParameterValues(interaction, this.parameters)
         } else {
             args = null
         }

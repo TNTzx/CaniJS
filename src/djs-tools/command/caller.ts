@@ -63,7 +63,12 @@ export function addCmdCaller(client: Djs.Client) {
         if (!interaction.isCommand()) return
         interaction = interaction as Djs.ChatInputCommandInteraction
 
-        await interaction.deferReply()
+        try {
+            await interaction.deferReply()
+        } catch (error) {
+            await interaction.channel?.send("The bot took too long to respond. Please try again.")
+            return
+        }
 
         const initialCmdTemplate = Registerer.getCmdTemplate(interaction.commandName)
 

@@ -6,7 +6,7 @@ import * as OtherTypes from "../other_types"
 
 
 export type ChoiceOption<T extends string | number = string | number> = {name: string, value: T}
-export type Choices<T extends string | number = string | number> = readonly ChoiceOption<T>[] | null
+export type Choices<T extends string | number = string | number> = readonly ChoiceOption<T>[]
 
 type IsRequiredMap<ValueTypeT, IsRequired extends boolean> = IsRequired extends true ? ValueTypeT : ValueTypeT | null
 
@@ -45,7 +45,7 @@ export abstract class CmdParameter<
     protected abstract getValueFromInteractionOptions(interactionOptions: OtherTypes.ChatInputCommandInteractionOptions): ValueTypeT | null
 
     public async getValue(interactionOptions: OtherTypes.ChatInputCommandInteractionOptions): Promise<IsRequiredMap<ValueTypeT, IsRequired> | OtherTypes.AssertFailInfo> {
-        const value = this.getValueFromInteractionOptions(interactionOptions)
+        const value = await this.getValueFromInteractionOptions(interactionOptions)
         if (this.required && value === null) return new OtherTypes.AssertFailInfo("This argument is required.")
 
         if (value !== null) {
@@ -75,8 +75,26 @@ export abstract class CmdParameter<
 
 
 
+export class ChoiceManager<ChoicesT extends Choices> {
+    constructor(public choices: ChoicesT) {}
+
+    public setupBuilderOption<
+        T extends Djs.SlashCommandStringOption
+            | Djs.SlashCommandNumberOption
+            | Djs.SlashCommandIntegerOption
+    >(builderOption: T) {
+        if (this.choices === null) return builderOption
+
+        return builderOption.addChoices(
+            ...this.choices as unknown as (Djs.APIApplicationCommandOptionChoice<string> & Djs.APIApplicationCommandOptionChoice<number>)[]
+        ) as T
+    }
+}
+interface ChoiceManagerArgs<ChoicesT extends Choices> {
+    choiceManager?: ChoiceManager<ChoicesT>
+}
 interface HasChoices<ChoicesT extends Choices> {
-    choices: ChoicesT
+    choiceManager: ChoiceManager<ChoicesT> | null
 }
 
 
@@ -85,14 +103,14 @@ export class CmdParamString<
     IsRequired extends boolean = boolean,
     ChoicesT extends Choices<string> = Choices<string>
 > extends CmdParameter<string, IsRequired, Djs.SlashCommandStringOption>
-implements HasChoices<ChoicesT>  {
+implements HasChoices<ChoicesT> {
     private __nominalString() {}
 
-    public choices: ChoicesT
+    public choiceManager: ChoiceManager<ChoicesT> | null
 
-    constructor(args: CmdParameterArgs<IsRequired> & {choices?: ChoicesT}) {
+    constructor(args: CmdParameterArgs<IsRequired> & ChoiceManagerArgs<ChoicesT>) {
         super(args)
-        this.choices = args.choices ?? null as ChoicesT
+        this.choiceManager = args.choiceManager ?? null
     }
 
     public min_chars: number = 1
@@ -110,9 +128,14 @@ implements HasChoices<ChoicesT>  {
 
 
     public override setupBuilderOption(option: Djs.SlashCommandStringOption): Djs.SlashCommandStringOption {
-        return super.setupBuilderOption(option)
+        const builder = super.setupBuilderOption(option)
             .setMaxLength(this.max_chars)
             .setMinLength(this.min_chars)
+        if (this.choiceManager !== null) {
+            return this.choiceManager.setupBuilderOption(builder)
+        } else {
+            return builder
+        }
     }
 
     public override addOptionToBuilder(builder: Builder): BuilderReturned {
@@ -121,39 +144,44 @@ implements HasChoices<ChoicesT>  {
 }
 
 
-interface ParamNumeric {
+interface ParamNumeric<ChoicesT extends Choices> extends HasChoices<ChoicesT> {
     min_value: number | null
     max_value: number | null
     setSizeLimits: (min: number | null, max: number | null) => this
 }
 
-function setSizeLimitsNumeric(paramNumeric: ParamNumeric, min: number | null, max: number | null) {
+function setSizeLimitsNumeric(paramNumeric: ParamNumeric<Choices>, min: number | null, max: number | null) {
     paramNumeric.min_value = min
     paramNumeric.max_value = max
 }
 
 function setupBuilderOptionNumeric<
-    BuilderOption extends Djs.SlashCommandIntegerOption | Djs.SlashCommandNumberOption
->(parameter: ParamNumeric, option: BuilderOption): BuilderOption {
-    if (parameter.max_value !== null) option.setMaxValue(parameter.max_value)
-    if (parameter.min_value !== null) option.setMinValue(parameter.min_value)
+    BuilderOption extends Djs.SlashCommandIntegerOption | Djs.SlashCommandNumberOption,
+    ChoicesT extends Choices<number>
+>(parameter: ParamNumeric<ChoicesT>, builder: BuilderOption): BuilderOption {
+    if (parameter.max_value !== null) builder.setMaxValue(parameter.max_value)
+    if (parameter.min_value !== null) builder.setMinValue(parameter.min_value)
 
-    return option
+    if (parameter.choiceManager !== null) {
+        return parameter.choiceManager.setupBuilderOption(builder)
+    } else {
+        return builder
+    }
 }
 
 export class CmdParamInteger<
     IsRequired extends boolean = boolean,
     ChoicesT extends Choices<number> = Choices<number>
-> extends CmdParameter<number, IsRequired, Djs.SlashCommandIntegerOption> implements ParamNumeric, HasChoices<ChoicesT> {
+> extends CmdParameter<number, IsRequired, Djs.SlashCommandIntegerOption> implements ParamNumeric<ChoicesT> {
     private __nominalInt() {}
 
-    public choices: ChoicesT
+    public choiceManager: ChoiceManager<ChoicesT> | null
     public min_value: number | null = null
     public max_value: number | null = null
 
-    constructor(args: CmdParameterArgs<IsRequired> & {choices?: ChoicesT}) {
+    constructor(args: CmdParameterArgs<IsRequired> & ChoiceManagerArgs<ChoicesT>) {
         super(args)
-        this.choices = args.choices ?? null as ChoicesT
+        this.choiceManager = args.choiceManager ?? null
     }
 
     public setSizeLimits(min: number | null, max: number | null) {
@@ -178,16 +206,16 @@ export class CmdParamInteger<
 export class CmdParamNumber<
     IsRequired extends boolean = boolean,
     ChoicesT extends Choices<number> = Choices<number>
-> extends CmdParameter<number, IsRequired, Djs.SlashCommandNumberOption> implements ParamNumeric, HasChoices<ChoicesT> {
+> extends CmdParameter<number, IsRequired, Djs.SlashCommandNumberOption> implements ParamNumeric<ChoicesT> {
     private __nominalNumber() {}
 
-    public choices: ChoicesT
+    public choiceManager: ChoiceManager<ChoicesT> | null
     public min_value: number | null = null
     public max_value: number | null = null
 
-    constructor(args: CmdParameterArgs<IsRequired> & {choices?: ChoicesT}) {
+    constructor(args: CmdParameterArgs<IsRequired> & ChoiceManagerArgs<ChoicesT>) {
         super(args)
-        this.choices = args.choices ?? null as ChoicesT
+        this.choiceManager = args.choiceManager ?? null
     }
 
     public setSizeLimits(min: number | null, max: number | null) {
@@ -410,15 +438,15 @@ export type ParamsToValueMap<CmdParameters extends readonly CmdGeneralParameter[
         ) : never
 }
 
-export function getParameterValues<
+export async function getParameterValues<
     Parameters extends readonly CmdGeneralParameter[],
 >(
     interaction: UseScope.AllScopedCommandInteraction,
     parameters: Parameters,
-): ParamsToValueMap<Parameters> {
+): Promise<ParamsToValueMap<Parameters>> {
     const results = []
     for (const parameter of parameters) {
-        results.push(parameter.getValue(interaction.options))
+        results.push(await parameter.getValue(interaction.options))
     }
 
     return results as ParamsToValueMap<Parameters>
