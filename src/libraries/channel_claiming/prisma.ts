@@ -8,6 +8,6 @@ export async function getClaimableChannels(guildSid: string) {
         include: {claimChannels: true}
     })
 
-    if (result === null) return null
+    if (result === null) throw new Error("Claimable channels not found.")
     return result.claimChannels
 }

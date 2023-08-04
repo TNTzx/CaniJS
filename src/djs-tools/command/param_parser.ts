@@ -1,11 +1,11 @@
 import Djs from "discord.js"
 
 import * as UseScope from "./use_scope"
-import * as OtherTypes from "../other_types"
+import * as Other from "../other"
 
 
 
-export type ChoiceOption<T extends string | number = string | number> = {name: string, value: T}
+export type ChoiceOption<T extends string | number = string | number> = { name: string, value: T }
 export type Choices<T extends string | number = string | number> = readonly ChoiceOption<T>[]
 
 type IsRequiredMap<ValueTypeT, IsRequired extends boolean> = IsRequired extends true ? ValueTypeT : ValueTypeT | null
@@ -42,23 +42,21 @@ export abstract class CmdParameter<
         return [this.name, this.required]
     }
 
-    protected abstract getValueFromInteractionOptions(interactionOptions: OtherTypes.ChatInputCommandInteractionOptions): ValueTypeT | null
+    protected abstract getValueFromInteractionOptions(interactionOptions: Other.ChatInputCommandInteractionOptions): ValueTypeT | null
 
-    public async getValue(interactionOptions: OtherTypes.ChatInputCommandInteractionOptions): Promise<IsRequiredMap<ValueTypeT, IsRequired> | OtherTypes.AssertFailInfo> {
+    public async getValue(interactionOptions: Other.ChatInputCommandInteractionOptions): Promise<IsRequiredMap<ValueTypeT, IsRequired> | AssertFailParameter> {
         const value = await this.getValueFromInteractionOptions(interactionOptions)
-        if (this.required && value === null) return new OtherTypes.AssertFailInfo("This argument is required.")
+        if (this.required && value === null) return new AssertFailParameter(this, "This argument is required.")
 
         if (value !== null) {
             const assertResult = await this.assertValue(value)
-            if (assertResult !== null) return new OtherTypes.AssertFailInfo(
-                `${Djs.inlineCode(this.name)}: ${assertResult.message}`
-            )
+            if (assertResult !== null) return assertResult
         }
 
         return value as IsRequiredMap<ValueTypeT, IsRequired>
     }
 
-    public async assertValue(_value: ValueTypeT): Promise<OtherTypes.AssertFailInfo | null> {
+    public async assertValue(_value: ValueTypeT): Promise<AssertFailParameter | null> {
         return null
     }
 
@@ -78,12 +76,12 @@ export abstract class CmdParameter<
 
 
 export class ChoiceManager<ChoicesT extends Choices> {
-    constructor(public choices: ChoicesT) {}
+    constructor(public choices: ChoicesT) { }
 
     public setupBuilderOption<
         T extends Djs.SlashCommandStringOption
-            | Djs.SlashCommandNumberOption
-            | Djs.SlashCommandIntegerOption
+        | Djs.SlashCommandNumberOption
+        | Djs.SlashCommandIntegerOption
     >(builderOption: T) {
         if (this.choices === null) return builderOption
 
@@ -105,8 +103,8 @@ export class CmdParamString<
     IsRequired extends boolean = boolean,
     ChoicesT extends Choices<string> = Choices<string>
 > extends CmdParameter<string, IsRequired, Djs.SlashCommandStringOption>
-implements HasChoices<ChoicesT> {
-    private __nominalString() {}
+    implements HasChoices<ChoicesT> {
+    private __nominalString() { }
 
     public choiceManager: ChoiceManager<ChoicesT> | null
 
@@ -124,7 +122,7 @@ implements HasChoices<ChoicesT> {
         return this
     }
 
-    protected override getValueFromInteractionOptions(options: OtherTypes.ChatInputCommandInteractionOptions) {
+    protected override getValueFromInteractionOptions(options: Other.ChatInputCommandInteractionOptions) {
         return options.getString(...this.toGetValueArgs())
     }
 
@@ -175,7 +173,7 @@ export class CmdParamInteger<
     IsRequired extends boolean = boolean,
     ChoicesT extends Choices<number> = Choices<number>
 > extends CmdParameter<number, IsRequired, Djs.SlashCommandIntegerOption> implements ParamNumeric<ChoicesT> {
-    private __nominalInt() {}
+    private __nominalInt() { }
 
     public choiceManager: ChoiceManager<ChoicesT> | null
     public min_value: number | null = null
@@ -191,7 +189,7 @@ export class CmdParamInteger<
         return this
     }
 
-    protected override getValueFromInteractionOptions(options: OtherTypes.ChatInputCommandInteractionOptions) {
+    protected override getValueFromInteractionOptions(options: Other.ChatInputCommandInteractionOptions) {
         return options.getInteger(...this.toGetValueArgs())
     }
 
@@ -209,7 +207,7 @@ export class CmdParamNumber<
     IsRequired extends boolean = boolean,
     ChoicesT extends Choices<number> = Choices<number>
 > extends CmdParameter<number, IsRequired, Djs.SlashCommandNumberOption> implements ParamNumeric<ChoicesT> {
-    private __nominalNumber() {}
+    private __nominalNumber() { }
 
     public choiceManager: ChoiceManager<ChoicesT> | null
     public min_value: number | null = null
@@ -226,7 +224,7 @@ export class CmdParamNumber<
         return this
     }
 
-    protected override getValueFromInteractionOptions(options: OtherTypes.ChatInputCommandInteractionOptions) {
+    protected override getValueFromInteractionOptions(options: Other.ChatInputCommandInteractionOptions) {
         return options.getNumber(...this.toGetValueArgs())
     }
 
@@ -242,9 +240,9 @@ export class CmdParamNumber<
 export class CmdParamBoolean<
     IsRequired extends boolean = boolean,
 > extends CmdParameter<boolean, IsRequired, Djs.SlashCommandBooleanOption> {
-    private __nominalBoolean() {}
+    private __nominalBoolean() { }
 
-    protected override getValueFromInteractionOptions(options: OtherTypes.ChatInputCommandInteractionOptions) {
+    protected override getValueFromInteractionOptions(options: Other.ChatInputCommandInteractionOptions) {
         return options.getBoolean(...this.toGetValueArgs())
     }
 
@@ -254,13 +252,13 @@ export class CmdParamBoolean<
 }
 
 
-export type CmdParamMentionableValue = NonNullable<ReturnType<OtherTypes.ChatInputCommandInteractionOptions["getMentionable"]>>
+export type CmdParamMentionableValue = NonNullable<ReturnType<Other.ChatInputCommandInteractionOptions["getMentionable"]>>
 export class CmdParamMentionable<
     IsRequired extends boolean = boolean,
 > extends CmdParameter<CmdParamMentionableValue, IsRequired, Djs.SlashCommandMentionableOption> {
-    private __nominalMentionable() {}
+    private __nominalMentionable() { }
 
-    protected override getValueFromInteractionOptions(options: OtherTypes.ChatInputCommandInteractionOptions) {
+    protected override getValueFromInteractionOptions(options: Other.ChatInputCommandInteractionOptions) {
         return options.getMentionable(...this.toGetValueArgs())
     }
 
@@ -269,7 +267,7 @@ export class CmdParamMentionable<
     }
 }
 
-export type CmdParamChannelValue = NonNullable<ReturnType<OtherTypes.ChatInputCommandInteractionOptions["getChannel"]>>
+export type CmdParamChannelValue = NonNullable<ReturnType<Other.ChatInputCommandInteractionOptions["getChannel"]>>
 
 export enum ChannelRestrict {
     Text = Djs.ChannelType.GuildText,
@@ -283,12 +281,12 @@ export enum ChannelRestrict {
 }
 
 type ChannelRestrictsMap<ValidChannelTypes extends ChannelRestrict[]> = (
-    {[P in keyof ValidChannelTypes]: ChannelEnumToRestrictMap<ValidChannelTypes[P]>}[number]
+    { [P in keyof ValidChannelTypes]: ChannelEnumToRestrictMap<ValidChannelTypes[P]> }[number]
 )
 type ChannelRestrictsOptionalMap<ValidChannelTypes extends ChannelRestrict[] | null> = (
     ValidChannelTypes extends ChannelRestrict[]
-        ? ChannelRestrictsMap<ValidChannelTypes>
-        : CmdParamChannelValue
+    ? ChannelRestrictsMap<ValidChannelTypes>
+    : CmdParamChannelValue
 )
 type ChannelEnumToRestrictMap<ChannelType extends ChannelRestrict> = (
     ChannelType extends ChannelRestrict.Text ? Djs.TextChannel :
@@ -316,29 +314,29 @@ export class CmdParamChannel<
     ValueTypeT extends ChannelRestrictsOptionalMap<ChannelRestrictsT> = ChannelRestrictsOptionalMap<ChannelRestrictsT>,
     IsRequired extends boolean = boolean,
 > extends CmdParameter<ValueTypeT, IsRequired, Djs.SlashCommandChannelOption> {
-    private __nominalChannel() {}
+    private __nominalChannel() { }
 
     public validChannelTypes: ChannelRestrictsT
 
-    constructor(args: CmdParameterArgs<IsRequired> & {validChannelTypes?: ChannelRestrictsT}) {
+    constructor(args: CmdParameterArgs<IsRequired> & { validChannelTypes?: ChannelRestrictsT }) {
         super(args)
         this.validChannelTypes = args.validChannelTypes ?? null as unknown as ChannelRestrictsT
     }
 
-    protected override getValueFromInteractionOptions(options: OtherTypes.ChatInputCommandInteractionOptions) {
+    protected override getValueFromInteractionOptions(options: Other.ChatInputCommandInteractionOptions) {
         return options.getChannel(...this.toGetValueArgs()) as ValueTypeT
     }
 
-    public override async assertValue(value: ValueTypeT): Promise<OtherTypes.AssertFailInfo | null> {
+    public override async assertValue(value: ValueTypeT): Promise<AssertFailParameter | null> {
         if (this.validChannelTypes === null) return null
         if (this.validChannelTypes.includes(value.type as number)) return null
 
-        return new OtherTypes.AssertFailInfo(
+        return new AssertFailParameter(
+            this,
             "The channel is not a channel of the correct type. " + (
                 this.validChannelTypes.length === 1
                     ? `You must input a ${channelEnumToStringMap[this.validChannelTypes[0]]} channel.`
-                    : `You must input a channel of one of these types: ${
-                        this.validChannelTypes.map(validChannelType => channelEnumToStringMap[validChannelType] + "channel").join(", ")
+                    : `You must input a channel of one of these types: ${this.validChannelTypes.map(validChannelType => channelEnumToStringMap[validChannelType] + "channel").join(", ")
                     }`
             )
         )
@@ -354,9 +352,9 @@ export type CmdParamRoleValue = Djs.Role | Djs.APIRole
 export class CmdParamRole<
     IsRequired extends boolean = boolean,
 > extends CmdParameter<CmdParamRoleValue, IsRequired, Djs.SlashCommandRoleOption> {
-    private __nominalRole() {}
+    private __nominalRole() { }
 
-    protected override getValueFromInteractionOptions(options: OtherTypes.ChatInputCommandInteractionOptions) {
+    protected override getValueFromInteractionOptions(options: Other.ChatInputCommandInteractionOptions) {
         return options.getRole(...this.toGetValueArgs())
     }
 
@@ -369,9 +367,9 @@ export type CmdParamUserValue = Djs.User
 export class CmdParamUser<
     IsRequired extends boolean = boolean,
 > extends CmdParameter<CmdParamUserValue, IsRequired, Djs.SlashCommandUserOption> {
-    private __nominalUser() {}
+    private __nominalUser() { }
 
-    protected override getValueFromInteractionOptions(options: OtherTypes.ChatInputCommandInteractionOptions) {
+    protected override getValueFromInteractionOptions(options: Other.ChatInputCommandInteractionOptions) {
         return options.getUser(...this.toGetValueArgs())
     }
 
@@ -384,9 +382,9 @@ export type CmdParamAttachmentValue = Djs.Attachment
 export class CmdParamAttachment<
     IsRequired extends boolean = boolean,
 > extends CmdParameter<CmdParamAttachmentValue, IsRequired, Djs.SlashCommandAttachmentOption> {
-    private __nominalAttachment() {}
+    private __nominalAttachment() { }
 
-    protected override getValueFromInteractionOptions(options: OtherTypes.ChatInputCommandInteractionOptions) {
+    protected override getValueFromInteractionOptions(options: Other.ChatInputCommandInteractionOptions) {
         return options.getAttachment(...this.toGetValueArgs())
     }
 
@@ -422,22 +420,42 @@ type ValueOrChoiceMap<ValueTypeT, ChoicesT extends Choices<string | number>> = (
 
 
 export type CmdGeneralParameter = (
-    CmdParamString | CmdParamInteger | CmdParamNumber | CmdParamBoolean
+    CmdParameter
+    | CmdParamString | CmdParamInteger | CmdParamNumber | CmdParamBoolean
     | CmdParamMentionable | CmdParamChannel | CmdParamRole | CmdParamUser | CmdParamAttachment
 )
 
 
 
+export class AssertFailParameter extends Other.AssertFailSimple {
+    private __nominalAssertFailParameter() {}
+
+    constructor(public parameter: CmdGeneralParameter, message: string) {super(message)}
+
+    public getListDisplay() {
+        return `${Djs.inlineCode(this.parameter.name)}: ${this.message}`
+    }
+
+    public getMessage(): string {
+        return `You have inputted an invalid argument for the parameter ${this.getListDisplay()}`
+    }
+}
+
+
 export type ParamsToValueMap<CmdParameters extends readonly CmdGeneralParameter[]> = {
     [P in keyof CmdParameters]:
-        CmdParameters[P] extends CmdParameter<
-            infer ValueTypeT,
-            infer IsRequired
-        > ? (
-            CmdParameters[P] extends ParamsWithChoices
-            ? IsRequiredMap<ValueOrChoiceMap<ValueTypeT, InferChoices<CmdParameters[P]>>, IsRequired>
-            : IsRequiredMap<ValueTypeT, IsRequired>
-        ) : never
+    CmdParameters[P] extends CmdParameter<
+        infer ValueTypeT,
+        infer IsRequired
+    > ? (
+        CmdParameters[P] extends ParamsWithChoices
+        ? IsRequiredMap<ValueOrChoiceMap<ValueTypeT, InferChoices<CmdParameters[P]>>, IsRequired> | AssertFailParameter
+        : IsRequiredMap<ValueTypeT, IsRequired> | AssertFailParameter
+    ) : never
+}
+
+export type ParamsToValueMapNoAsserts<CmdParameters extends readonly CmdGeneralParameter[]> = {
+    [P in keyof ParamsToValueMap<CmdParameters>]: Exclude<ParamsToValueMap<CmdParameters>[P], AssertFailParameter>
 }
 
 export async function getParameterValues<
@@ -445,14 +463,11 @@ export async function getParameterValues<
 >(
     interaction: UseScope.AllScopedCommandInteraction,
     parameters: Parameters,
-): Promise<ParamsToValueMap<Parameters> | OtherTypes.AssertFailInfo[]> {
+): Promise<ParamsToValueMap<Parameters>> {
     const results = []
     for (const parameter of parameters) {
         results.push(await parameter.getValue(interaction.options))
     }
-
-    const assertFailInfos = results.filter(result => result instanceof OtherTypes.AssertFailInfo) as OtherTypes.AssertFailInfo[]
-    if (assertFailInfos.length > 0) return assertFailInfos
 
     return results as ParamsToValueMap<Parameters>
 }

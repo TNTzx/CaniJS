@@ -1,6 +1,6 @@
 import Djs from "discord.js"
 
-import * as OtherTypes from "../other_types"
+import * as Other from "../other"
 import * as ParamParser from "./param_parser"
 import * as UseCase from "./use_case"
 import * as UseScope from "./use_scope"
@@ -8,13 +8,31 @@ import * as UseScope from "./use_scope"
 
 
 type Params = (readonly ParamParser.CmdGeneralParameter[]) | null
-type ParamValueMap<ParamsT extends Params> = ParamsT extends readonly ParamParser.CmdGeneralParameter[] ? ParamParser.ParamsToValueMap<ParamsT> : undefined
+type ParamValueMap<ParamsT extends Params> = ParamsT extends readonly ParamParser.CmdGeneralParameter[] ? ParamParser.ParamsToValueMapNoAsserts<ParamsT> : undefined
 type ExecuteFunc<UseScopeT extends UseScope.UseScope, ParamsT extends Params> =
     (
         interaction: UseScopeT extends UseScope.UseScope ? UseScope.UseScopeToInteractionMap<UseScopeT> : UseScope.MergeScopeCommandInteraction,
         args: ParamValueMap<ParamsT>
-    ) => Promise<void>
+    ) => Promise<Other.AssertFail | void>
 type UseCases<UseScopeT extends UseScope.UseScope = UseScope.UseScope> = readonly UseCase.UseCase<UseScopeT>[]
+
+
+
+export class AssertFailCommand extends Other.AssertFailSimple {
+    private __nominalAssertFailCommand() {}
+}
+
+export class AssertFailParameters extends Other.AssertFail {
+    private __nominalAssertFailParameters() {}
+
+    constructor(public assertFailParameters: ParamParser.AssertFailParameter[]) {super()}
+
+    public getMessage(): string {
+        return Djs.bold("You have given incorrect arguments for these parameters:\n") +
+            (this.assertFailParameters.map(af => af.getListDisplay())).join("\n")
+    }
+
+}
 
 
 
@@ -233,23 +251,24 @@ export class CmdTemplateLeaf<UseScopeT extends UseScope.UseScope = UseScope.UseS
 
 
     public async runCmd(interaction: UseScope.UseScopeToInteractionMap<UseScopeT>) {
-        let args
+        let args: ParamParser.ParamsToValueMapNoAsserts<NonNullable<ParamsT>> | undefined
         if (this.parameters !== null) {
             this.parameters = this.parameters as NonNullable<ParamsT>
-            args = await ParamParser.getParameterValues(interaction, this.parameters)
-            if (args[0] instanceof OtherTypes.AssertFailInfo) {
-                args = args as OtherTypes.AssertFailInfo[]
-                const failMessages: string[] = args.map(arg => arg.message)
-                return new OtherTypes.AssertFailInfo(
-                    Djs.bold("You have given incorrect arguments for these parameters:\n") +
-                    failMessages.join("\n")
-                )
+            const values = await ParamParser.getParameterValues(
+                interaction, this.parameters
+            ) as (ParamParser.AssertFailParameter | unknown)[]
+
+            const assertFailParams = values.filter(value => value instanceof ParamParser.AssertFailParameter) as ParamParser.AssertFailParameter[]
+            if (assertFailParams.length > 0) {
+                return new AssertFailParameters(assertFailParams)
             }
+
+            args = values as ParamParser.ParamsToValueMapNoAsserts<NonNullable<ParamsT>>
         } else {
             args = undefined
         }
 
-        await this.executeFunc(...[interaction, args] as Parameters<ExecuteFunc<UseScopeT, ParamsT>>)
+        return await this.executeFunc(...[interaction, args] as Parameters<ExecuteFunc<UseScopeT, ParamsT>>)
     }
 
 
