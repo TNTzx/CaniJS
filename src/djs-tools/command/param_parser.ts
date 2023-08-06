@@ -44,19 +44,19 @@ export abstract class CmdParameter<
 
     protected abstract getValueFromInteractionOptions(interactionOptions: Other.ChatInputCommandInteractionOptions): ValueTypeT | null
 
-    public async getValue(interactionOptions: Other.ChatInputCommandInteractionOptions): Promise<IsRequiredMap<ValueTypeT, IsRequired> | AssertFailParameter> {
+    public async getValue(interactionOptions: Other.ChatInputCommandInteractionOptions): Promise<IsRequiredMap<ValueTypeT, IsRequired>> {
         const value = await this.getValueFromInteractionOptions(interactionOptions)
-        if (this.required && value === null) return new AssertFailParameter(this, "This argument is required.")
+        if (this.required && value === null) throw new HErrorSingleParam(this, "This argument is required.")
 
         if (value !== null) {
             const assertResult = await this.assertValue(value)
-            if (assertResult !== null) return assertResult
+            if (assertResult !== null) throw assertResult
         }
 
         return value as IsRequiredMap<ValueTypeT, IsRequired>
     }
 
-    public async assertValue(_value: ValueTypeT): Promise<AssertFailParameter | null> {
+    public async assertValue(_value: ValueTypeT): Promise<HErrorSingleParam | null> {
         return null
     }
 
@@ -327,11 +327,11 @@ export class CmdParamChannel<
         return options.getChannel(...this.toGetValueArgs()) as ValueTypeT
     }
 
-    public override async assertValue(value: ValueTypeT): Promise<AssertFailParameter | null> {
+    public override async assertValue(value: ValueTypeT): Promise<HErrorSingleParam | null> {
         if (this.validChannelTypes === null) return null
         if (this.validChannelTypes.includes(value.type as number)) return null
 
-        return new AssertFailParameter(
+        return new HErrorSingleParam(
             this,
             "The channel is not a channel of the correct type. " + (
                 this.validChannelTypes.length === 1
@@ -427,19 +427,47 @@ export type CmdGeneralParameter = (
 
 
 
-export class AssertFailParameter extends Other.AssertFailSimple {
-    private __nominalAssertFailParameter() {}
+export class HErrorSingleParam extends Other.HandleableError {
+    private __nominalHErrorSingleParam() { }
 
-    constructor(public parameter: CmdGeneralParameter, message: string) {super(message)}
-
-    public getListDisplay() {
-        return `${Djs.inlineCode(this.parameter.name)}: ${this.message}`
+    constructor(public parameter: CmdGeneralParameter, public externalMessage: string, cause?: Error) {
+        super(`${parameter.name}: ${externalMessage}`, cause)
     }
 
-    public getMessage(): string {
+    public getListDisplay() {
+        return `${Djs.inlineCode(this.parameter.name)}: ${this.externalMessage}`
+    }
+
+    public override getDisplayMessage(): string {
         return `You have inputted an invalid argument for the parameter ${this.getListDisplay()}`
     }
 }
+
+export class HErrorReferredParams extends Other.HandleableError {
+    constructor(public referredParameters: CmdGeneralParameter[], public herror: Other.HandleableError) {
+        super(`${referredParameters.map(param => param.name).join(", ")}: ${herror.getDisplayMessage()}`, herror)
+    }
+
+    public override getDisplayMessage(): string {
+        return "You have inputted an invalid argument for the parameter/s" +
+            Djs.inlineCode(this.referredParameters.map(param => param.name).join(", ")) + ": " +
+            this.herror.getDisplayMessage()
+    }
+}
+
+export class HErrorParams extends Other.HandleableError {
+    private __nominalHErrorParams() { }
+
+    constructor(public herrorSingleParam: HErrorSingleParam[], cause?: Error) {
+        super(`The following parameters received arguments that are invalid: ${herrorSingleParam.map(herror => herror.parameter.name)}`, cause)
+    }
+
+    public getDisplayMessage(): string {
+        return Djs.bold("You have given incorrect arguments for these parameters:\n") +
+            (this.herrorSingleParam.map(af => af.getListDisplay())).join("\n")
+    }
+}
+
 
 
 export type ParamsToValueMap<CmdParameters extends readonly CmdGeneralParameter[]> = {
@@ -449,13 +477,9 @@ export type ParamsToValueMap<CmdParameters extends readonly CmdGeneralParameter[
         infer IsRequired
     > ? (
         CmdParameters[P] extends ParamsWithChoices
-        ? IsRequiredMap<ValueOrChoiceMap<ValueTypeT, InferChoices<CmdParameters[P]>>, IsRequired> | AssertFailParameter
-        : IsRequiredMap<ValueTypeT, IsRequired> | AssertFailParameter
+        ? IsRequiredMap<ValueOrChoiceMap<ValueTypeT, InferChoices<CmdParameters[P]>>, IsRequired>
+        : IsRequiredMap<ValueTypeT, IsRequired>
     ) : never
-}
-
-export type ParamsToValueMapNoAsserts<CmdParameters extends readonly CmdGeneralParameter[]> = {
-    [P in keyof ParamsToValueMap<CmdParameters>]: Exclude<ParamsToValueMap<CmdParameters>[P], AssertFailParameter>
 }
 
 export async function getParameterValues<
@@ -465,8 +489,21 @@ export async function getParameterValues<
     parameters: Parameters,
 ): Promise<ParamsToValueMap<Parameters>> {
     const results = []
+    const errors: HErrorSingleParam[] = []
     for (const parameter of parameters) {
-        results.push(await parameter.getValue(interaction.options))
+        try {
+            results.push(await parameter.getValue(interaction.options))
+        } catch (error) {
+            if (error instanceof HErrorSingleParam) {
+                errors.push(error)
+            } else {
+                throw error
+            }
+        }
+    }
+
+    if (errors.length > 0) {
+        throw new HErrorParams(errors)
     }
 
     return results as ParamsToValueMap<Parameters>

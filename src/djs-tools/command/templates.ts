@@ -8,30 +8,18 @@ import * as UseScope from "./use_scope"
 
 
 type Params = (readonly ParamParser.CmdGeneralParameter[]) | null
-type ParamValueMap<ParamsT extends Params> = ParamsT extends readonly ParamParser.CmdGeneralParameter[] ? ParamParser.ParamsToValueMapNoAsserts<ParamsT> : undefined
+type ParamValueMap<ParamsT extends Params> = ParamsT extends readonly ParamParser.CmdGeneralParameter[] ? ParamParser.ParamsToValueMap<ParamsT> : undefined
 type ExecuteFunc<UseScopeT extends UseScope.UseScope, ParamsT extends Params> =
     (
         interaction: UseScopeT extends UseScope.UseScope ? UseScope.UseScopeToInteractionMap<UseScopeT> : UseScope.MergeScopeCommandInteraction,
         args: ParamValueMap<ParamsT>
-    ) => Promise<Other.AssertFail | void>
+    ) => Promise<Other.HandleableError | void>
 type UseCases<UseScopeT extends UseScope.UseScope = UseScope.UseScope> = readonly UseCase.UseCase<UseScopeT>[]
 
 
 
-export class AssertFailCommand extends Other.AssertFailSimple {
+export class HErrorCommand extends Other.HandleableError {
     private __nominalAssertFailCommand() {}
-}
-
-export class AssertFailParameters extends Other.AssertFail {
-    private __nominalAssertFailParameters() {}
-
-    constructor(public assertFailParameters: ParamParser.AssertFailParameter[]) {super()}
-
-    public getMessage(): string {
-        return Djs.bold("You have given incorrect arguments for these parameters:\n") +
-            (this.assertFailParameters.map(af => af.getListDisplay())).join("\n")
-    }
-
 }
 
 
@@ -251,19 +239,12 @@ export class CmdTemplateLeaf<UseScopeT extends UseScope.UseScope = UseScope.UseS
 
 
     public async runCmd(interaction: UseScope.UseScopeToInteractionMap<UseScopeT>) {
-        let args: ParamParser.ParamsToValueMapNoAsserts<NonNullable<ParamsT>> | undefined
+        let args: ParamParser.ParamsToValueMap<NonNullable<ParamsT>> | undefined
         if (this.parameters !== null) {
             this.parameters = this.parameters as NonNullable<ParamsT>
-            const values = await ParamParser.getParameterValues(
+            args = await ParamParser.getParameterValues(
                 interaction, this.parameters
-            ) as (ParamParser.AssertFailParameter | unknown)[]
-
-            const assertFailParams = values.filter(value => value instanceof ParamParser.AssertFailParameter) as ParamParser.AssertFailParameter[]
-            if (assertFailParams.length > 0) {
-                return new AssertFailParameters(assertFailParams)
-            }
-
-            args = values as ParamParser.ParamsToValueMapNoAsserts<NonNullable<ParamsT>>
+            ) as ParamParser.ParamsToValueMap<NonNullable<ParamsT>>
         } else {
             args = undefined
         }
@@ -297,7 +278,3 @@ export class CmdTemplateLeaf<UseScopeT extends UseScope.UseScope = UseScope.UseS
 
 
 export type CmdTemplateType = CmdTemplateGroup | CmdTemplateLeaf
-
-export class CmdTemplateLeafAll extends CmdTemplateLeaf {
-
-}

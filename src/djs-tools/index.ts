@@ -3,3 +3,5 @@ export * from "./command/registerer"
 
 export * from "./command"
 export * from "./prisma"
+
+export * from "./other"

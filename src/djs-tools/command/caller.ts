@@ -101,11 +101,13 @@ export function addCmdCaller(client: Djs.Client) {
 
 
         try {
-            const result = await effectiveTemplate.template.runCmd(interaction)
-            if (result instanceof Other.AssertFail) {
-                await interaction.editReply(result.getMessage())
-            }
+            await effectiveTemplate.template.runCmd(interaction)
         } catch (error) {
+            if (error instanceof Other.HandleableError) {
+                await interaction.editReply(error.internalMessage)
+                return
+            }
+
             console.error(error)
 
             const userDisplay = error instanceof Error ? error.name : typeof error

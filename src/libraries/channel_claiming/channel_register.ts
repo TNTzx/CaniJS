@@ -1,10 +1,56 @@
+import { Prisma } from "@prisma/client"
+import Djs from "discord.js"
 import * as DjsTools from "djs-tools"
 
 import * as Moderation from "../moderation"
 
 import * as CmdGroup from "./cmd_group"
-import * as PrismaLocal from "./prisma"
+import * as General from "./general"
 
+
+
+// TEST
+async function prismaClaimableAdd(guild: Djs.Guild, channel: Djs.TextChannel) {
+    try {
+        return await DjsTools.getPrismaClient().claimChannel.create({
+            data: {
+                channelClaiming: {connect: {
+                    guildSid: guild.id
+                }},
+                channelSid: channel.id,
+            }
+        })
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === "P2002") {
+                throw new General.HErrorClaimableAlreadyExists(guild, channel, error)
+            }
+        }
+        throw error
+    }
+}
+
+
+// TEST
+async function prismaClaimableRemove(guild: Djs.Guild, channel: Djs.TextChannel) {
+    try {
+        return await DjsTools.getPrismaClient().claimChannel.delete({
+            where: {
+                channelClaiming: {
+                    guildSid: guild.id
+                },
+                channelSid: channel.id,
+            }
+        })
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === "P2001") {
+                throw new General.HErrorClaimableNotExists(guild, channel, error)
+            }
+        }
+        throw error
+    }
+}
 
 
 const paramRegister = [
@@ -30,8 +76,27 @@ export const cmdRegister = CmdGroup.cmdGroupChannelClaiming.addSubTemplateLeaf({
     description: "Edits the channels able to be claimed.",
     parameters: paramRegister,
     useCases: [Moderation.caseIsAdmin],
-    async executeFunc(interaction, args) {
-        const registeredChannels = PrismaLocal.getClaimableChannels(interaction.guild.id)
-
+    async executeFunc(interaction, [action, channel]) {
+        if (action === "add") {
+            try {
+                await prismaClaimableAdd(interaction.guild, channel)
+            } catch (error) {
+                // TEST
+                if (error instanceof General.HErrorClaimableAlreadyExists) {
+                    throw new DjsTools.HErrorReferredParams([paramRegister[1]], error)
+                }
+            }
+            await interaction.editReply(`Added ${channel.toString()} as a claimable channel!`)
+        } else {
+            try {
+                await prismaClaimableRemove(interaction.guild, channel)
+            } catch (error) {
+                // TEST
+                if (error instanceof General.HErrorClaimableNotExists) {
+                    throw new DjsTools.HErrorReferredParams([paramRegister[1]], error)
+                }
+            }
+            await interaction.editReply(`Removed ${channel.toString()} as a claimable channel!`)
+        }
     },
 })
