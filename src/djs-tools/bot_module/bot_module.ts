@@ -46,6 +46,5 @@ export async function setupClient(botClient: Djs.Client) {
             .filter(dbGuildSetupper => dbGuildSetupper !== null) as GuildSetup.DBGuildSetupper[]
         )
 
-    CmdCache.cacheCmdTemplates(botModules.map(botModule => botModule.cmdTemplates).flat(1))
     CmdCaller.addCmdCaller(botClient)
 }

@@ -69,12 +69,12 @@ export class DBGuildSetupper {
     }
 }
 
-export function mergeSetupDatas(dbGuildSetuppers: DBGuildSetupper[]) {
-    return Object.assign({}, ...dbGuildSetuppers) as DBGuildSetupper
+export function mergeSetupDatas(dbGuildSetuppers: DBGuildSetupper[], guildSid: string) {
+    return Object.assign({}, ...(dbGuildSetuppers.map(setupper => setupper.setup(guildSid)))) as Prisma.GuildUpdateInput
 }
 
 export async function setupGuildConditional(guildSid: string, dbGuildSetuppers: DBGuildSetupper[]) {
-    const mergedSetupDatas = mergeSetupDatas(dbGuildSetuppers)
+    const mergedSetupDatas = mergeSetupDatas(dbGuildSetuppers, guildSid)
 
     for (const dbGuildSetupper of dbGuildSetuppers) {
         if (!(await dbGuildSetupper.isAlreadySetup(guildSid))) {

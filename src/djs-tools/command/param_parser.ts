@@ -337,7 +337,8 @@ export class CmdParamChannel<
             "The channel is not a channel of the correct type. " + (
                 this.validChannelTypes.length === 1
                     ? `You must input a ${channelEnumToStringMap[this.validChannelTypes[0]]} channel.`
-                    : `You must input a channel of one of these types: ${this.validChannelTypes.map(validChannelType => channelEnumToStringMap[validChannelType] + "channel").join(", ")
+                    : `You must input a channel of one of these types: ${
+                        this.validChannelTypes.map(validChannelType => channelEnumToStringMap[validChannelType] + "channel").join(", ")
                     }`
             )
         )
@@ -440,7 +441,7 @@ export class HErrorSingleParam extends Other.HandleableError {
     }
 
     public override getDisplayMessage(): string {
-        return `You have inputted an invalid argument for the parameter ${this.getListDisplay()}`
+        return `You have given an invalid argument for the parameter ${this.getListDisplay()}`
     }
 }
 
@@ -450,7 +451,7 @@ export class HErrorReferredParams extends Other.HandleableError {
     }
 
     public override getDisplayMessage(): string {
-        return "You have inputted an invalid argument for the parameter/s" +
+        return Djs.bold("You have given an invalid argument for the parameter/s ") +
             Djs.inlineCode(this.referredParameters.map(param => param.name).join(", ")) + ": " +
             this.herror.getDisplayMessage()
     }

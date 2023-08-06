@@ -103,7 +103,7 @@ export function addCmdCaller(client: Djs.Client) {
             await effectiveTemplate.template.runCmd(interaction)
         } catch (error) {
             if (error instanceof Other.HandleableError) {
-                await interaction.editReply(error.internalMessage)
+                await interaction.editReply(error.getDisplayMessage())
                 return
             }
 
