@@ -30,9 +30,15 @@ export function addBotModule(botModule: BotModule) {
     botModules.push(botModule)
 }
 
+export function setupCaches() {
+    CmdCache.cacheCmdTemplates(botModules.map(botModule => botModule.cmdTemplates).flat(1))
+}
+
 
 
 export async function setupClient(botClient: Djs.Client) {
+    setupCaches()
+
     GuildSetup.addDbGuildSetupperEvent(
         botClient,
         getAllModules()
@@ -40,6 +46,6 @@ export async function setupClient(botClient: Djs.Client) {
             .filter(dbGuildSetupper => dbGuildSetupper !== null) as GuildSetup.DBGuildSetupper[]
         )
 
-    CmdCache.cacheAllCmdTemplates(botModules.map(botModule => botModule.cmdTemplates).flat(1))
+    CmdCache.cacheCmdTemplates(botModules.map(botModule => botModule.cmdTemplates).flat(1))
     CmdCaller.addCmdCaller(botClient)
 }

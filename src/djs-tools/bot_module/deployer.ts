@@ -1,12 +1,15 @@
 import Djs from "discord.js"
 
 import * as CmdCache from "./cmd_cache"
+import * as BotModule from "./bot_module"
 
 
 
 export async function deployCmdsGuildBased(client: Djs.Client, botToken: string, appId: string) {
     const restApi = new Djs.REST()
     restApi.setToken(botToken)
+
+    BotModule.setupCaches()
 
     const registeredCmdTemplateMap = CmdCache.getCmdTemplatesCache()
 
@@ -30,7 +33,7 @@ export async function deployCmdsGuildBased(client: Djs.Client, botToken: string,
             )
         }
 
-        console.log("Successfully refreshed all slash commands.")
+        console.log("Successfully refreshed and deployed all slash commands.")
 
         client.destroy()
     } catch (error) {

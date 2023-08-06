@@ -11,7 +11,7 @@ export function addCmdTemplateToCache<CmdTemplateT>(cmdTemplate: CmdTemplateT) {
     cmdTemplateCache.set(typedCmdTemplate.id, typedCmdTemplate)
 }
 
-export function cacheAllCmdTemplates<CmdTemplateT>(cmdTemplates: CmdTemplateT[]) {
+export function cacheCmdTemplates<CmdTemplateT>(cmdTemplates: CmdTemplateT[]) {
     for (const cmdTemplate of cmdTemplates) addCmdTemplateToCache(cmdTemplate)
 }
 

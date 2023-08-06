@@ -2,6 +2,7 @@ import Djs from "discord.js"
 
 import * as Other from "../other"
 import * as Cmds from "../command"
+import * as CmdCache from "./cmd_cache"
 
 
 
@@ -69,7 +70,7 @@ export function addCmdCaller(client: Djs.Client) {
             return
         }
 
-        const initialCmdTemplate = Cmds.getCmdTemplateFromCache(interaction.commandName)
+        const initialCmdTemplate = CmdCache.getCmdTemplateFromCache(interaction.commandName)
 
         let effectiveTemplate: EffectiveTemplate
 

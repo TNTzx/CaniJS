@@ -8,7 +8,6 @@ import * as ChannelClaiming from "./channel_claiming"
 
 
 const botModules: DjsTools.BotModule[] = [
-    Test.botModule,
     Basic.botModule,
     Moderation.botModule,
     ChannelClaiming.botModule
@@ -17,5 +16,9 @@ const botModules: DjsTools.BotModule[] = [
 export function loadAllModules() {
     for (const botModule of botModules) {
         DjsTools.addBotModule(botModule)
+    }
+
+    if (DjsTools.getDevEnvStatus()) {
+        DjsTools.addBotModule(Test.botModule)
     }
 }

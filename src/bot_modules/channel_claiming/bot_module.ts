@@ -1,6 +1,6 @@
 import * as DjsTools from "djs-tools"
 
-import * as ChannelRegister from "./channel_register"
+import * as CmdGroup from "./cmd_group"
 
 
 export const botModule = new DjsTools.BotModule({
@@ -21,6 +21,6 @@ export const botModule = new DjsTools.BotModule({
     }),
 
     cmdTemplates: [
-        ChannelRegister.cmdRegister
+        CmdGroup.cmdGroupChannelClaiming
     ]
 })
