@@ -9,7 +9,6 @@ import * as General from "./general"
 
 
 
-// TEST
 async function prismaClaimableAdd(guild: Djs.Guild, channel: Djs.TextChannel) {
     try {
         return await DjsTools.getPrismaClient().claimChannel.create({
@@ -31,7 +30,6 @@ async function prismaClaimableAdd(guild: Djs.Guild, channel: Djs.TextChannel) {
 }
 
 
-// TEST
 async function prismaClaimableRemove(guild: Djs.Guild, channel: Djs.TextChannel) {
     try {
         return await DjsTools.getPrismaClient().claimChannel.delete({
@@ -44,7 +42,7 @@ async function prismaClaimableRemove(guild: Djs.Guild, channel: Djs.TextChannel)
         })
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            if (error.code === "P2001") {
+            if (error.code === "P2025") {
                 throw new General.HErrorClaimableNotExists(guild, channel, error)
             }
         }
@@ -77,26 +75,26 @@ export const cmdRegister = CmdGroup.cmdGroupChannelClaiming.addSubTemplateLeaf({
     parameters: paramRegister,
     useCases: [Moderation.caseIsAdmin],
     async executeFunc(interaction, [action, channel]) {
+        await interaction.editReply("Editing the claimable channels list...")
+
         if (action === "add") {
             try {
                 await prismaClaimableAdd(interaction.guild, channel)
             } catch (error) {
-                // TEST
                 if (error instanceof General.HErrorClaimableAlreadyExists) {
                     throw new DjsTools.HErrorReferredParams([paramRegister[1]], error)
                 }
             }
-            await interaction.editReply(`Added ${channel.toString()} as a claimable channel!`)
+            await interaction.followUp(`Added ${channel.toString()} as a claimable channel!`)
         } else {
             try {
                 await prismaClaimableRemove(interaction.guild, channel)
             } catch (error) {
-                // TEST
                 if (error instanceof General.HErrorClaimableNotExists) {
                     throw new DjsTools.HErrorReferredParams([paramRegister[1]], error)
                 }
             }
-            await interaction.editReply(`Removed ${channel.toString()} as a claimable channel!`)
+            await interaction.followUp(`Removed ${channel.toString()} as a claimable channel!`)
         }
     },
 })
