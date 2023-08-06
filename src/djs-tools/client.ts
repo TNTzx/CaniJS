@@ -1,8 +1,7 @@
 import Djs from "discord.js"
 import env from "dotenv"
 
-import * as DjsToolsCmds from "./command"
-import * as DjsToolsPrisma from "./prisma"
+import * as BotModule from "./bot_module"
 
 
 
@@ -44,8 +43,8 @@ export async function clientLogin() {
         console.log(`Logged in as ${clientPass.user.tag}, ID ${clientPass.user.id}.`)
     })
 
-    DjsToolsCmds.addCmdCaller(client)
-    DjsToolsPrisma.addGuildDBUpdater(client)
+    console.log("Setting up client...")
+    await BotModule.setupClient(client)
 
     console.log("Logging into client for running...")
     await client.login(getBotToken())

@@ -1,36 +1,35 @@
 import Djs from "discord.js"
 import { Prisma } from "@prisma/client"
 
-import * as PrismaClient from "./client"
+import * as DjsTPrisma from "../prisma"
 
 
 
 export function getGuildCreateData(guildSid: string): Prisma.GuildCreateInput {
     return {
-        guildSid: guildSid,
-        permissions: {create: {}}
+        guildSid: guildSid
     }
 }
 
 export function getGuildWhereUnique(guildSid: string): Prisma.GuildWhereUniqueInput {
-    return {guildSid: guildSid}
+    return { guildSid: guildSid }
 }
 
 
 export async function addGuildToDB(guildSid: string) {
-    return await PrismaClient.getPrismaClient().guild.create({
+    return await DjsTPrisma.getPrismaClient().guild.create({
         data: getGuildCreateData(guildSid)
     })
 }
 
 export async function deleteGuildFromDB(guildSid: string) {
-    return await PrismaClient.getPrismaClient().guild.delete({
+    return await DjsTPrisma.getPrismaClient().guild.delete({
         where: getGuildWhereUnique(guildSid)
     })
 }
 
 export async function updateGuildsDB(botGuildSids: string[]) {
-    const prismaClient = PrismaClient.getPrismaClient()
+    const prismaClient = DjsTPrisma.getPrismaClient()
 
 
     const prismaGuildEntries = await prismaClient.guild.findMany()
@@ -39,61 +38,59 @@ export async function updateGuildsDB(botGuildSids: string[]) {
     const toAddGuildSids = botGuildSids.filter(botGuildSid => !prismaGuildSids.includes(botGuildSid))
     const createdEntries = toAddGuildSids.length !== 0
         ? await prismaClient.$transaction(toAddGuildSids.map(
-            toAddGuildSid => prismaClient.guild.create({data: getGuildCreateData(toAddGuildSid)})
+            toAddGuildSid => prismaClient.guild.create({ data: getGuildCreateData(toAddGuildSid) })
         ))
         : null
 
     const toDeleteGuildSids = prismaGuildSids.filter(prismaGuildSid => !botGuildSids.includes(prismaGuildSid))
     const deletedEntries = toDeleteGuildSids.length !== 0
         ? await prismaClient.$transaction(toDeleteGuildSids.map(
-            toDeleteGuildSid => prismaClient.guild.delete({where: getGuildWhereUnique(toDeleteGuildSid)})
+            toDeleteGuildSid => prismaClient.guild.delete({ where: getGuildWhereUnique(toDeleteGuildSid) })
         ))
         : null
 
-    return {createdEntries: createdEntries, deletedEntries: deletedEntries}
+    return { createdEntries: createdEntries, deletedEntries: deletedEntries }
 }
 
 
 
 export class DBGuildSetupper {
     public isAlreadySetup: (guildSid: string) => Promise<boolean>
-    public setup: (guildSid: string) => Promise<unknown>
+    public setup: (guildSid: string) => Prisma.GuildUpdateInput
 
     constructor(
         args: {
             isAlreadySetup: (guildSid: string) => Promise<boolean>,
-            setup: (guildSid: string) => Promise<unknown>
+            getSetupData: (guildSid: string) => Prisma.GuildUpdateInput
         }
     ) {
         this.isAlreadySetup = args.isAlreadySetup
-        this.setup = args.setup
+        this.setup = args.getSetupData
     }
 }
 
-const dbGuildSetuppers: DBGuildSetupper[] = []
-export function addDBGuildSetupper(dbGuildSetupper: DBGuildSetupper) {
-    dbGuildSetuppers.push(dbGuildSetupper)
+export function mergeSetupDatas(dbGuildSetuppers: DBGuildSetupper[]) {
+    return Object.assign({}, ...dbGuildSetuppers) as DBGuildSetupper
 }
 
-export async function runGuildSetupFuncs(guildSid: string) {
+export async function setupGuildConditional(guildSid: string, dbGuildSetuppers: DBGuildSetupper[]) {
+    const mergedSetupDatas = mergeSetupDatas(dbGuildSetuppers)
+
     for (const dbGuildSetupper of dbGuildSetuppers) {
-        if (!(await dbGuildSetupper.isAlreadySetup(guildSid)))
-            await dbGuildSetupper.setup(guildSid)
+        if (!(await dbGuildSetupper.isAlreadySetup(guildSid))) {
+            await DjsTPrisma.getPrismaClient().guild.update({
+                where: {guildSid: guildSid},
+                data: mergedSetupDatas
+            })
+        }
     }
 }
 
-export async function runGuildSetupFuncsAllGuilds(guildSids: string[]) {
-    for (const guildSid of guildSids) {
-        await runGuildSetupFuncs(guildSid)
-    }
-}
 
-
-
-export function addGuildDBUpdater(botClient: Djs.Client) {
+export function addDbGuildSetupperEvent(botClient: Djs.Client, dbGuildSetuppers: DBGuildSetupper[]) {
     botClient.on(Djs.Events.GuildCreate, async guild => {
         await addGuildToDB(guild.id)
-        await runGuildSetupFuncs(guild.id)
+        await setupGuildConditional(guild.id, dbGuildSetuppers)
     })
 
     botClient.on(Djs.Events.GuildDelete, async guild => {
@@ -101,13 +98,16 @@ export function addGuildDBUpdater(botClient: Djs.Client) {
     })
 
     botClient.on(Djs.Events.ClientReady, async client => {
-        const allGuildIds = client.guilds.cache.map(guild => guild.id)
+        const allGuildSids = client.guilds.cache.map(guild => guild.id)
 
         console.log("Updating guild list...")
-        await updateGuildsDB(allGuildIds)
+        await updateGuildsDB(allGuildSids)
 
         console.log("Setting up all guilds...")
-        await runGuildSetupFuncsAllGuilds(allGuildIds)
+        const allDbGuildSetuppers = dbGuildSetuppers
+        for (const guildSid of allGuildSids) {
+            await setupGuildConditional(guildSid, allDbGuildSetuppers)
+        }
 
         console.log("Finished setting up database for all guilds.")
     })

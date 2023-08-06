@@ -138,4 +138,4 @@ prisma/migrations/
 #   git update-index --assume-unchanged "src/libraries/test/test.ts"
 # to not:
 #   git update-index --no-assume-unchanged "src/libraries/test/test.ts"
-src/libraries/test/
+src/libraries/test/test.ts

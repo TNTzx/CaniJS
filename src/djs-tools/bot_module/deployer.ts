@@ -1,6 +1,6 @@
 import Djs from "discord.js"
 
-import * as Registerer from "./registerer"
+import * as CmdCache from "./cmd_cache"
 
 
 
@@ -8,7 +8,7 @@ export async function deployCmdsGuildBased(client: Djs.Client, botToken: string,
     const restApi = new Djs.REST()
     restApi.setToken(botToken)
 
-    const registeredCmdTemplateMap = Registerer.getRegisteredCmdTemplateMap()
+    const registeredCmdTemplateMap = CmdCache.getCmdTemplatesCache()
 
     console.log("Logging into client for deploying slash commands (guild based)...")
     await client.login(botToken)
@@ -17,7 +17,7 @@ export async function deployCmdsGuildBased(client: Djs.Client, botToken: string,
     const cmdDatas = [...registeredCmdTemplateMap.values()].map(cmdTemplate => cmdTemplate.createBuilder().toJSON())
 
     try {
-		console.log(`Refreshing ${registeredCmdTemplateMap.size} slash commands:`)
+        console.log(`Refreshing ${registeredCmdTemplateMap.size} slash commands:`)
         for (const cmdTemplate of registeredCmdTemplateMap.values())
             console.log(cmdTemplate.getDeployDisplay())
 
@@ -30,10 +30,10 @@ export async function deployCmdsGuildBased(client: Djs.Client, botToken: string,
             )
         }
 
-		console.log("Successfully refreshed all slash commands.")
+        console.log("Successfully refreshed all slash commands.")
 
         client.destroy()
-	} catch (error) {
-		console.error(error)
-	}
+    } catch (error) {
+        console.error(error)
+    }
 }

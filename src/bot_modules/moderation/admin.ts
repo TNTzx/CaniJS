@@ -27,6 +27,7 @@ export const caseIsAdmin = new DjsTools.UseCase({
 })
 
 
+
 async function editAdminRole(guildSid: string, adminRoleSid: string) {
     return await DjsTools.getPrismaClient().permissions.update({
         where: { guildSid: guildSid },

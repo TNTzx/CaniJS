@@ -1,25 +1,23 @@
 import Djs from "discord.js"
 
 import * as Other from "../other"
-import * as UseCase from "./use_case"
-import * as Templates from "./templates"
-import * as Registerer from "./registerer"
+import * as Cmds from "../command"
 
 
 
 interface EffectiveTemplate {
-    template: Templates.CmdTemplateLeaf
-    useCases: readonly UseCase.UseCase[]
+    template: Cmds.CmdTemplateLeaf
+    useCases: readonly Cmds.UseCase[]
 }
 
 
 
 function searchSubcommand(
-    cmdTemplateGroup: Templates.CmdTemplateGroup,
+    cmdTemplateGroup: Cmds.CmdTemplateGroup,
     interactionOptions: Omit<Djs.CommandInteractionOptionResolver<Djs.CacheType>, "getMessage" | "getFocused">
 ): EffectiveTemplate {
-    function recursive(nextPath: string[], currentTemplate: Templates.CmdTemplateType): EffectiveTemplate {
-        if (currentTemplate instanceof Templates.CmdTemplateLeaf) {
+    function recursive(nextPath: string[], currentTemplate: Cmds.CmdTemplateType): EffectiveTemplate {
+        if (currentTemplate instanceof Cmds.CmdTemplateLeaf) {
             return { template: currentTemplate, useCases: currentTemplate.useCases }
         }
 
@@ -43,8 +41,8 @@ function searchSubcommand(
     function expandPath(path: string[]) {
         let newPath: string[] = []
         for (const pathPoint of path) {
-            if (pathPoint.includes(Templates.CmdTemplateGroup.combineIdSeparator)) {
-                newPath = newPath.concat(pathPoint.split(Templates.CmdTemplateGroup.combineIdSeparator))
+            if (pathPoint.includes(Cmds.CmdTemplateGroup.combineIdSeparator)) {
+                newPath = newPath.concat(pathPoint.split(Cmds.CmdTemplateGroup.combineIdSeparator))
             } else {
                 newPath.push(pathPoint)
             }
@@ -71,14 +69,14 @@ export function addCmdCaller(client: Djs.Client) {
             return
         }
 
-        const initialCmdTemplate = Registerer.getCmdTemplate(interaction.commandName)
+        const initialCmdTemplate = Cmds.getCmdTemplateFromCache(interaction.commandName)
 
         let effectiveTemplate: EffectiveTemplate
 
-        if (initialCmdTemplate instanceof Templates.CmdTemplateGroup) {
+        if (initialCmdTemplate instanceof Cmds.CmdTemplateGroup) {
             const result = searchSubcommand(initialCmdTemplate, interaction.options)
             effectiveTemplate = result
-        } else if (initialCmdTemplate instanceof Templates.CmdTemplateLeaf) {
+        } else if (initialCmdTemplate instanceof Cmds.CmdTemplateLeaf) {
             effectiveTemplate = {
                 template: initialCmdTemplate,
                 useCases: initialCmdTemplate.useCases

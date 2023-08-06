@@ -1,8 +1,7 @@
 import Djs from "discord.js"
 import * as DjsTools from "djs-tools"
 
-import CommandImport from "./libraries/command_import"
-import CmdModuleImport from "./libraries/cmdmodule_import"
+import * as BotModules from "./bot_modules"
 
 
 
@@ -44,8 +43,7 @@ if (environment === "--dev") {
 
 DjsTools.sayDevEnvStatus()
 
-CommandImport()
-CmdModuleImport()
+BotModules.loadAllModules()
 
 
 const prismaClient = DjsTools.getPrismaClient()
