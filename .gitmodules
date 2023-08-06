@@ -1,0 +1,3 @@
+[submodule "src/djs-tools"]
+	path = src/djs-tools
+	url = https://github.com/TNTzx/djs-tools
