@@ -16,11 +16,11 @@ async function updateClaimStatus(channel: Djs.TextChannel, isClaimed: boolean, l
             data: {
                 isClaimed: isClaimed,
                 location: location,
-                claimedAt: currentTime
+                timeUpdated: currentTime
             }
         })
 
-        return {updatedAt: currentTime}
+        return {timeUpdated: currentTime}
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
             if (error.code === "P2025") throw new General.HErrorClaimableNotExists(channel.guild, channel, error)
@@ -62,7 +62,7 @@ export const cmdClaim = Group.cmdGroupChannelClaiming.addSubTemplateLeaf({
         await interaction.followUp(
             Djs.bold("Channel has been claimed!") + "\n" +
             `Current location: ${Djs.bold(location)}\n` +
-            getUpdateTimeDisplay(result.updatedAt)
+            getUpdateTimeDisplay(result.timeUpdated)
         )
     }
 })
@@ -86,7 +86,7 @@ export const cmdUnclaim = Group.cmdGroupChannelClaiming.addSubTemplateLeaf({
 
         await interaction.followUp(
             Djs.bold("Channel has been unclaimed!") + "\n" +
-            getUpdateTimeDisplay(result.updatedAt)
+            getUpdateTimeDisplay(result.timeUpdated)
         )
     }
 })

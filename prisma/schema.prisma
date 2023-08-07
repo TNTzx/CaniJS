@@ -37,7 +37,7 @@ model BMCC_Claimable {
 
     channelSid String @unique
 
-    isClaimed Boolean   @default(false)
-    location  String?
-    claimedAt DateTime?
+    isClaimed   Boolean   @default(false)
+    location    String?
+    timeUpdated DateTime?
 }
