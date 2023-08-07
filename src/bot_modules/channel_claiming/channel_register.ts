@@ -51,7 +51,7 @@ async function prismaClaimableRemove(guild: Djs.Guild, channel: Djs.TextChannel)
 }
 
 
-const paramRegister = [
+const paramsEditChannels = [
     new DjsTools.CmdParamString({
         required: true,
         name: "action",
@@ -68,11 +68,10 @@ const paramRegister = [
         validChannelTypes: [DjsTools.ChannelRestrict.Text]
     })
 ] as const
-
-export const cmdRegister = CmdGroup.cmdGroupChannelClaiming.addSubTemplateLeaf({
+export const cmdEditChannels = CmdGroup.cmdGroupChannelClaiming.addSubTemplateLeaf({
     id: "edit-channels",
     description: "Edits the channels able to be claimed.",
-    parameters: paramRegister,
+    parameters: paramsEditChannels,
     useCases: [Moderation.caseIsAdmin],
     async executeFunc(interaction, [action, channel]) {
         await interaction.editReply("Editing the claimable channels list...")
@@ -82,7 +81,7 @@ export const cmdRegister = CmdGroup.cmdGroupChannelClaiming.addSubTemplateLeaf({
                 await prismaClaimableAdd(interaction.guild, channel)
             } catch (error) {
                 if (error instanceof General.HErrorClaimableAlreadyExists) {
-                    throw new DjsTools.HErrorReferredParams([paramRegister[1]], error)
+                    throw new DjsTools.HErrorReferredParams([paramsEditChannels[1]], error)
                 }
             }
             await interaction.followUp(`Added ${channel.toString()} as a claimable channel!`)
@@ -91,7 +90,7 @@ export const cmdRegister = CmdGroup.cmdGroupChannelClaiming.addSubTemplateLeaf({
                 await prismaClaimableRemove(interaction.guild, channel)
             } catch (error) {
                 if (error instanceof General.HErrorClaimableNotExists) {
-                    throw new DjsTools.HErrorReferredParams([paramRegister[1]], error)
+                    throw new DjsTools.HErrorReferredParams([paramsEditChannels[1]], error)
                 }
             }
             await interaction.followUp(`Removed ${channel.toString()} as a claimable channel!`)
