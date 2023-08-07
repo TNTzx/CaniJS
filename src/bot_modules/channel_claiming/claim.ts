@@ -7,7 +7,32 @@ import * as General from "./general"
 
 
 
-//async function updateClaimStatus(channel: Djs.TextChannel, isClaimed: boolean, location: string | null) {}
+async function updateClaimStatus(channel: Djs.TextChannel, isClaimed: boolean, location: string | null) {
+    const currentTime = new Date()
+
+    try {
+        await DjsTools.getPrismaClient().bMCC_Claimable.update({
+            where: {channelSid: channel.id},
+            data: {
+                isClaimed: isClaimed,
+                location: location,
+                claimedAt: currentTime
+            }
+        })
+
+        return {updatedAt: currentTime}
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === "P2025") throw new General.HErrorClaimableNotExists(channel.guild, channel, error)
+        }
+        throw error
+    }
+}
+
+
+function getUpdateTimeDisplay(time: Date) {
+    return `Updated ${Djs.time(time, Djs.TimestampStyles.RelativeTime)} | ${Djs.time(time, Djs.TimestampStyles.ShortDateTime)}`
+}
 
 
 const paramsClaim = [
@@ -25,35 +50,20 @@ export const cmdClaim = Group.cmdGroupChannelClaiming.addSubTemplateLeaf({
     async executeFunc(interaction, [location]) {
         await interaction.editReply("Claiming current channel...")
 
-        const guild = interaction.guild
         const channel = interaction.channel
         if (!(channel instanceof Djs.TextChannel)) {
             throw new General.HErrorChannelNotText(channel)
         }
 
-        const claimedAt = new Date()
+        // TEST regular update
+        // TEST channel not claimable
+        const result = await updateClaimStatus(channel, true, location)
 
-        try {
-            await DjsTools.getPrismaClient().bMCC_Claimable.update({
-                where: {channelSid: channel.id},
-                data: {
-                    isClaimed: true,
-                    location: location,
-                    claimedAt: claimedAt
-                }
-            })
-
-            await interaction.followUp(
-                Djs.bold("Channel has been claimed!") + "\n" +
-                `Current location: ${Djs.bold(location)}\n` +
-                `Claimed ${Djs.time(claimedAt, Djs.TimestampStyles.RelativeTime)} | ${Djs.time(claimedAt, Djs.TimestampStyles.ShortDateTime)}`
-            )
-        } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                if (error.code === "P2025") throw new General.HErrorClaimableNotExists(guild, channel, error)
-            }
-            throw error
-        }
+        await interaction.followUp(
+            Djs.bold("Channel has been claimed!") + "\n" +
+            `Current location: ${Djs.bold(location)}\n` +
+            getUpdateTimeDisplay(result.updatedAt)
+        )
     }
 })
 
@@ -64,33 +74,19 @@ export const cmdUnclaim = Group.cmdGroupChannelClaiming.addSubTemplateLeaf({
     description: "Unclaims the current channel and marks it as free to use.",
 
     async executeFunc(interaction, _args) {
-        // TODO merge
         await interaction.editReply("Unclaiming current channel...")
 
-        const guild = interaction.guild
         const channel = interaction.channel
         if (!(channel instanceof Djs.TextChannel)) {
             throw new General.HErrorChannelNotText(channel)
         }
 
-        try {
-            await DjsTools.getPrismaClient().bMCC_Claimable.update({
-                where: {channelSid: channel.id},
-                data: {
-                    isClaimed: false,
-                    location: null,
-                    claimedAt: null // TODO updated at
-                }
-            })
+        // TEST regular update
+        const result = await updateClaimStatus(channel, false, null)
 
-            await interaction.followUp(
-                Djs.bold("Channel has been unclaimed!")
-            )
-        } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                if (error.code === "P2025") throw new General.HErrorClaimableNotExists(guild, channel, error)
-            }
-            throw error
-        }
+        await interaction.followUp(
+            Djs.bold("Channel has been unclaimed!") + "\n" +
+            getUpdateTimeDisplay(result.updatedAt)
+        )
     }
 })
