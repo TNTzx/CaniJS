@@ -24,7 +24,6 @@ export const cmdClaim = Group.cmdGroupChannelClaiming.addSubTemplateLeaf({
 
         const guild = interaction.guild
         const channel = interaction.channel
-        // TEST
         if (!(channel instanceof Djs.TextChannel)) {
             throw new General.HErrorChannelNotText(channel)
         }
@@ -47,7 +46,6 @@ export const cmdClaim = Group.cmdGroupChannelClaiming.addSubTemplateLeaf({
                 `Claimed ${Djs.time(claimedAt, Djs.TimestampStyles.RelativeTime)} | ${Djs.time(claimedAt, Djs.TimestampStyles.ShortDateTime)}`
             )
         } catch (error) {
-            // TEST
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
                 if (error.code === "P2025") throw new General.HErrorClaimableNotExists(guild, channel, error)
             }

@@ -20,8 +20,6 @@ model BMAdmin {
     guildSid String @unique
 
     adminSid String? @unique
-
-    @@map("Permissions")
 }
 
 model BMChannelClaiming {
@@ -30,20 +28,16 @@ model BMChannelClaiming {
     guildSid String @unique
 
     claimables BMCC_Claimable[]
-
-    @@map("ModuleChannelClaiming")
 }
 
 model BMCC_Claimable {
     id                  Int               @id @default(autoincrement())
     bmChannelClaiming   BMChannelClaiming @relation(fields: [bmChannelClaimingId], references: [id], onDelete: Cascade)
-    bmChannelClaimingId Int               @map("channelClaimingId")
+    bmChannelClaimingId Int
 
     channelSid String @unique
 
     isClaimed Boolean   @default(false)
     location  String?
     claimedAt DateTime?
-
-    @@map("ClaimChannel")
 }

@@ -23,14 +23,14 @@
   },
   "homepage": "https://github.com/TNTzx/CaniJS#readme",
   "dependencies": {
-    "@prisma/client": "^5.0.0",
+    "@prisma/client": "^5.1.1",
     "discord.js": "^14.11.0",
     "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "prisma": "^5.0.0",
+    "prisma": "^5.1.1",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.1.6"
