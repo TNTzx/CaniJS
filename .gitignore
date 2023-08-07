@@ -130,8 +130,6 @@ dist
 .pnp.*
 
 
-# prisma
-prisma/migrations/
 
 # test library
 # to make changes to it locally without committing it with all the other files:
