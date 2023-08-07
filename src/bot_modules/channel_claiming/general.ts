@@ -29,12 +29,12 @@ export class HErrorClaimableNotExists extends DjsTools.HandleableError {
 
 
 export async function getClaimableChannels(guildSid: string) {
-    const result = await DjsTools.getPrismaClient().moduleChannelClaiming.findFirst({
+    const result = await DjsTools.getPrismaClient().bMChannelClaiming.findFirst({
         where: { guildSid: guildSid },
-        include: { claimChannels: true }
+        include: { claimables: true }
     })
 
     if (result === null) throw new Error("Claimable channels not found.")
-    return result.claimChannels
+    return result.claimables
 }
 

@@ -11,9 +11,9 @@ import * as General from "./general"
 
 async function prismaClaimableAdd(guild: Djs.Guild, channel: Djs.TextChannel) {
     try {
-        return await DjsTools.getPrismaClient().claimChannel.create({
+        return await DjsTools.getPrismaClient().bMCC_Claimable.create({
             data: {
-                channelClaiming: {connect: {
+                bmChannelClaiming: {connect: {
                     guildSid: guild.id
                 }},
                 channelSid: channel.id,
@@ -32,9 +32,9 @@ async function prismaClaimableAdd(guild: Djs.Guild, channel: Djs.TextChannel) {
 
 async function prismaClaimableRemove(guild: Djs.Guild, channel: Djs.TextChannel) {
     try {
-        return await DjsTools.getPrismaClient().claimChannel.delete({
+        return await DjsTools.getPrismaClient().bMCC_Claimable.delete({
             where: {
-                channelClaiming: {
+                bmChannelClaiming: {
                     guildSid: guild.id
                 },
                 channelSid: channel.id,

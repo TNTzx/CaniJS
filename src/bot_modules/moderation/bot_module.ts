@@ -9,15 +9,15 @@ export const botModule = new DjsTools.BotModule({
 
     dbGuildSetupper: new DjsTools.DBGuildSetupper({
         async isAlreadySetup(guildSid) {
-            const result = await DjsTools.getPrismaClient().permissions.findFirst({
-                where: {guildSid: guildSid}
+            const result = await DjsTools.getPrismaClient().bMAdmin.findFirst({
+                where: { guildSid: guildSid }
             })
 
             return !(result === null)
         },
 
         getSetupData(_guildSid) {
-            return {permissions: {create: {}}}
+            return { bmAdmin: { create: {} } }
         }
     }),
 

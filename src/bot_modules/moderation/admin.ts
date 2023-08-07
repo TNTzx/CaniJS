@@ -5,12 +5,12 @@ import * as DjsTools from "djs-tools"
 
 
 async function getAdminRoleSid(guildSid: string) {
-    const prismaPermissions = await DjsTools.getPrismaClient().permissions.findFirst({
+    const prismaBMAdmin = await DjsTools.getPrismaClient().bMAdmin.findFirst({
         where: {guildSid: guildSid}
     })
 
-    if (prismaPermissions === null) return null
-    return prismaPermissions.adminSid
+    if (prismaBMAdmin === null) return null
+    return prismaBMAdmin.adminSid
 }
 
 
@@ -29,7 +29,7 @@ export const caseIsAdmin = new DjsTools.UseCase({
 
 
 async function editAdminRole(guildSid: string, adminRoleSid: string) {
-    return await DjsTools.getPrismaClient().permissions.update({
+    return await DjsTools.getPrismaClient().bMAdmin.update({
         where: { guildSid: guildSid },
         data: { adminSid: adminRoleSid }
     })

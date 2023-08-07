@@ -10,34 +10,40 @@ generator client {
 model Guild {
     guildSid String @id
 
-    permissions           Permissions?
-    moduleChannelClaiming ModuleChannelClaiming?
+    bmAdmin           BMAdmin?
+    bmChannelClaiming BMChannelClaiming?
 }
 
-model Permissions {
+model BMAdmin {
     id       Int    @id @default(autoincrement())
     guild    Guild  @relation(fields: [guildSid], references: [guildSid], onDelete: Cascade)
     guildSid String @unique
 
     adminSid String? @unique
+
+    @@map("Permissions")
 }
 
-model ModuleChannelClaiming {
+model BMChannelClaiming {
     id       Int    @id @default(autoincrement())
     guild    Guild  @relation(fields: [guildSid], references: [guildSid], onDelete: Cascade)
     guildSid String @unique
 
-    claimChannels ClaimChannel[]
+    claimables BMCC_Claimable[]
+
+    @@map("ModuleChannelClaiming")
 }
 
-model ClaimChannel {
-    id                Int                   @id @default(autoincrement())
-    channelClaiming   ModuleChannelClaiming @relation(fields: [channelClaimingId], references: [id], onDelete: Cascade)
-    channelClaimingId Int
+model BMCC_Claimable {
+    id                  Int               @id @default(autoincrement())
+    bmChannelClaiming   BMChannelClaiming @relation(fields: [bmChannelClaimingId], references: [id], onDelete: Cascade)
+    bmChannelClaimingId Int               @map("channelClaimingId")
 
     channelSid String @unique
 
     isClaimed Boolean   @default(false)
     location  String?
     claimedAt DateTime?
+
+    @@map("ClaimChannel")
 }
