@@ -55,8 +55,6 @@ export const cmdClaim = Group.cmdGroupChannelClaiming.addSubTemplateLeaf({
             throw new General.HErrorChannelNotText(channel)
         }
 
-        // TEST regular update
-        // TEST channel not claimable
         const result = await updateClaimStatus(channel, true, location)
 
         await interaction.followUp(
@@ -81,7 +79,6 @@ export const cmdUnclaim = Group.cmdGroupChannelClaiming.addSubTemplateLeaf({
             throw new General.HErrorChannelNotText(channel)
         }
 
-        // TEST regular update
         const result = await updateClaimStatus(channel, false, null)
 
         await interaction.followUp(
