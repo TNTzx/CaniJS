@@ -87,7 +87,7 @@ export async function generateEmbed(claimables: Prisma.BMCC_ClaimableGetPayload<
         }))
     } else {
         fields = [{
-            // TEST
+            // TESTCOMPLETE
             // TODO reference commands
             name: "No claimable channels!",
             value: "There are no claimable channels. Add one using /cc edit-channels!",
@@ -122,7 +122,7 @@ export async function updateEmbedFromBMCC(
     // TODO missing message
 
     const embed = await generateEmbed(claimables)
-    // TEST regular
+    // TESTCOMPLETE regular
     await message.edit({content: "", embeds: [embed]})
 
     return message
