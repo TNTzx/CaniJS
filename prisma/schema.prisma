@@ -28,6 +28,7 @@ model BMChannelClaiming {
     guildSid String @unique
 
     claimables BMCC_Claimable[]
+    embedData  BMCC_EmbedData?
 }
 
 model BMCC_Claimable {
@@ -40,4 +41,14 @@ model BMCC_Claimable {
     isClaimed   Boolean  @default(false)
     location    String?
     timeUpdated DateTime @default(now())
+}
+
+model BMCC_EmbedData {
+    id                  Int               @id @default(autoincrement())
+    bmChannelClaiming   BMChannelClaiming @relation(fields: [bmChannelClaimingId], references: [id], onDelete: Cascade)
+    bmChannelClaimingId Int               @unique
+
+    isSet      Boolean @default(false)
+    channelSid String?
+    messageSid String?
 }
