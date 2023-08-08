@@ -58,6 +58,7 @@ export async function generateEmbed(claimables: Prisma.BMCC_ClaimableGetPayload<
     if (claimables.length > 0) {
         fields = await Promise.all(claimables.map(async claimable => {
             const channel = await DjsTools.getClient().channels.fetch(claimable.channelSid)
+            // TEST
             if (channel === null) {
                 return {
                     name: `${claimable.channelSid} (${Djs.underscore("Unknown channel")})`,
@@ -76,6 +77,7 @@ export async function generateEmbed(claimables: Prisma.BMCC_ClaimableGetPayload<
                 }
             }
 
+            // TEST
             return {
                 name: `${channel.toString()} : ${claimable.isClaimed ? "Claimed" : "Unclaimed"}`,
                 value: (claimable.isClaimed ? `Location: ${claimable.location}\n` : "") +
@@ -108,7 +110,7 @@ export async function updateEmbedFromBMCC(
     embedData: Prisma.BMCC_EmbedDataGetPayload<undefined>
 ) {
     // TEST on implementation
-    if (embedData.channelSid === null || embedData.messageSid === null) {
+    if ((!embedData.isSet) || embedData.channelSid === null || embedData.messageSid === null) {
         throw new HErrorEmbedDataNotSet(guild)
     }
 
@@ -120,7 +122,8 @@ export async function updateEmbedFromBMCC(
     // TODO missing message
 
     const embed = await generateEmbed(claimables)
-    await message.edit({embeds: [embed]})
+    // TEST regular
+    await message.edit({content: "", embeds: [embed]})
 
     return message
 }
@@ -137,6 +140,7 @@ export async function setEmbedMessage(guild: Djs.Guild, channel: Djs.TextChannel
     const embedData = await DjsTools.getPrismaClient().bMCC_EmbedData.update({
         where: {bmChannelClaimingId: bmcc.id},
         data: {
+            isSet: true,
             channelSid: channel.id,
             messageSid: message.id
         }
