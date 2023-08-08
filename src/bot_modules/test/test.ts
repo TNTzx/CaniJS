@@ -1,20 +1,34 @@
 import * as Djs from "discord.js"
 import * as DjsTools from "../../djs-tools"
 
-import * as Admin from "../moderation"
-
 
 
 // Normal commands
 
+const paramsTestNormal = [
+    new DjsTools.CmdParamChannel({
+        required: true,
+        name: "channel",
+        description: "id",
+        validChannelTypes: [DjsTools.ChannelRestrict.Text]
+    }),
+    new DjsTools.CmdParamString({
+        required: true,
+        name: "messagesid",
+        description: "id"
+    })
+] as const
 export const cmdTestNormal = new DjsTools.CmdTemplateLeaf({
     id: "test",
     description: "Test command!",
+    parameters: paramsTestNormal,
     useScope: DjsTools.useScopeGuildOnly,
-    useCases: [Admin.caseIsAdmin],
+    // useCases: [Admin.caseIsAdmin],
 
-    async executeFunc(interaction, _args) {
-        await interaction.editReply("win")
+    async executeFunc(interaction, [channel, messageSid]) {
+        await interaction.editReply("Command executing...")
+        const result = await channel.messages.fetch(messageSid)
+        await interaction.followUp(result.url)
     }
 })
 
