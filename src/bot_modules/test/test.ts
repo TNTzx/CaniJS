@@ -129,13 +129,25 @@ const cmdTestParam = new DjsTools.CmdTemplateLeaf({
 
 
 // Case tests + Subcommands and Subcommand Groups
+class HErrorLetterNotIncludedInUsername extends DjsTools.HandleableError {
+    private __nominalHErrorLetterNotIncludedInUsername() {}
+
+    constructor(public member: Djs.GuildMember, public letter: string, cause?: Error) {
+        super(`MemberSID ${member.id} doesn't have the letter "${letter}" in their username "${member.displayName}".`, cause)
+    }
+
+    public override getDisplayMessage(): string {
+        return `You don't have a "${this.letter}" in your nickname!`
+    }
+}
+
 
 const caseB = new DjsTools.UseCase({
     name: "Has 'b' in nickname",
     useScope: DjsTools.useScopeGuildOnly,
     conditionFunc: async (interaction) => {
         if (!interaction.member.displayName.includes("b"))
-            return "You don't have a 'b' in your nickname!"
+            return new HErrorLetterNotIncludedInUsername(interaction.member, "b")
         return null
     }
 })
@@ -146,7 +158,7 @@ const caseA = new DjsTools.UseCase({
     initialUseCases: [caseB],
     conditionFunc: async (interaction) => {
         if (!interaction.member.displayName.includes("a"))
-            return "You don't have an 'a' in your nickname!"
+            return new HErrorLetterNotIncludedInUsername(interaction.member, "a")
         return null
     }
 })
@@ -156,7 +168,7 @@ const caseC = new DjsTools.UseCase({
     useScope: DjsTools.useScopeGuildOnly,
     conditionFunc: async (interaction) => {
         if (!interaction.member.displayName.includes("c"))
-            return "You don't have a 'c' in your nickname!"
+            return new HErrorLetterNotIncludedInUsername(interaction.member, "c")
         return null
     }
 })
