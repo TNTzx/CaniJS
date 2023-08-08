@@ -18,7 +18,20 @@ export const botModule = new DjsTools.BotModule({
 
         getSetupData(_guildSid) {
             return {bmChannelClaiming: {create: {}}}
-        }
+        },
+
+        async botModuleUpdator(guildSid) {
+            const prisma = DjsTools.getPrismaClient()
+            const result = await prisma.bMCC_EmbedData.findFirst({
+                where: {bmChannelClaiming: {guildSid: guildSid}}
+            })
+
+            if (result === null) {
+                await prisma.bMCC_EmbedData.create({
+                    data: {bmChannelClaiming: {connect: {guildSid: guildSid}}}
+                })
+            }
+        },
     }),
 
     cmdTemplates: [
