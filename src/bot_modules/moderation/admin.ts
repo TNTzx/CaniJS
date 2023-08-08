@@ -58,7 +58,7 @@ export const caseIsAdmin = new DjsTools.UseCase({
         const adminRoleSid = await getAdminRoleSid(interaction.guild.id)
         if (adminRoleSid === null) return new HErrorAdminRoleNotSet(interaction.guild)
 
-        // TEST
+        // TESTCOMPLETE
         const adminRole = await interaction.guild.roles.fetch(adminRoleSid)
         if (adminRole === null) return new HErrorAdminRoleNotFound(adminRoleSid, interaction.guild)
 
