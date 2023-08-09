@@ -51,8 +51,9 @@ export class HErrorEmbedDataCannotFetch extends DjsTools.HandleableError {
 export async function generateEmbed(claimables: Prisma.BMCC_ClaimableGetPayload<undefined>[]) {
     function sortResults(results: Awaited<ReturnType<typeof General.getChannelsFromClaimables>>) {
         return [...results].sort((a, b) => {
-            if (a.result instanceof General.HErrorClaimableChannelNotFound) return -1
-            if (b.result instanceof General.HErrorClaimableChannelNotFound) return +1
+            // TODO better handling
+            if (a.result instanceof DjsTools.HandleableError) return +1
+            if (b.result instanceof DjsTools.HandleableError) return -1
             return a.result.name.localeCompare(b.result.name, undefined, {sensitivity: "base"})
         })
     }
@@ -63,13 +64,25 @@ export async function generateEmbed(claimables: Prisma.BMCC_ClaimableGetPayload<
         const results = await General.getChannelsFromClaimables(claimables)
         const sortedResults = sortResults(results)
         fields = sortedResults.map((result) => {
-            if (result.result instanceof General.HErrorClaimableChannelNotFound) {
+            if (result.result instanceof DjsTools.HandleableError) {
                 // TODO make /cc edit-channels clear-invalid
-                return {
-                    name: `${result.claimable.channelSid} (${Djs.underscore("Unknown channel")})`,
-                    // TODO reference commands
-                    value: "This channel is not accessible or has been deleted. Please use /cc edit-channels clear-invalid to clear this or give permission to the bot to access this.",
-                    inline: false
+                if (result.result instanceof General.HErrorClaimableChannelNotFound) {
+                    return {
+                        name: `${result.claimable.channelSid} (${Djs.underscore("Deleted channel")})`,
+                        // TODO reference commands
+                        value: "This channel is deleted. Please use /cc edit-channels clear-invalid to clear this.",
+                        inline: false
+                    }
+                } else if (result.result instanceof General.HErrorClaimableForbidden) {
+                    return {
+                        name: `${result.claimable.channelSid} (${Djs.underscore("Channel Unaccessible")})`,
+                        // TODO reference commands
+                        value: "This channel cannot be accessed by the bot. " +
+                            "Please give the bot permission to view this channel or use /cc edit-channels clear-invalid to clear this.",
+                        inline: false
+                    }
+                } else {
+                    throw result.result
                 }
             } else {
                 return {

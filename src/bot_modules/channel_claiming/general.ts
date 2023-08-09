@@ -76,13 +76,26 @@ export class HErrorClaimableChannelNotFound extends DjsTools.HandleableError {
     private __nominalHErrorClaimableChannelNotFound() {}
 
     constructor(public channelSid: string, cause?: Error) {
-        super(`Claimable ChannelSID ${channelSid} cannot be accessed or is deleted.`, cause)
+        super(`Claimable ChannelSID ${channelSid} cannot be found.`, cause)
     }
 
     public override getDisplayMessage(): string {
-        return "The channel is deleted or the channel cannot be accessed by the bot!"
+        return "The channel cannot be found!"
     }
 }
+
+export class HErrorClaimableForbidden extends DjsTools.HandleableError {
+    private __nominalHErrorClaimableForbidden() {}
+
+    constructor(public channelSid: string, cause?: Error) {
+        super(`Claimable ChannelSID ${channelSid} cannot be accessed.`, cause)
+    }
+
+    public override getDisplayMessage(): string {
+        return "The channel cannot be accessed by the bot!"
+    }
+}
+
 
 export class ErrorClaimableNotTextChannel extends Error {
     private __nominalErrorClaimableNotTextChannel() {}
@@ -96,11 +109,18 @@ export async function getChannelsFromClaimables(claimables: Prisma.BMCC_Claimabl
     return await Promise.all(claimables.map(async claimable => {
         let channel
         try {
-            channel = await DjsTools.getClient().channels.fetch(claimable.channelSid)
+            channel = await DjsTools.getClient().channels.fetch(claimable.channelSid, {force: true})
         } catch (error) {
-            if (error instanceof Djs.DiscordAPIError && error.code === 10003) return {
-                claimable: claimable,
-                result: new HErrorClaimableChannelNotFound(claimable.channelSid)
+            if (error instanceof Djs.DiscordAPIError) {
+                if (error.code === 10003) return {
+                    claimable: claimable,
+                    result: new HErrorClaimableChannelNotFound(claimable.channelSid, error)
+                }
+                // TODO forbidden
+                if (error.code === 50001) return {
+                    claimable: claimable,
+                    result: new HErrorClaimableForbidden(claimable.channelSid, error)
+                }
             }
             throw error
         }
