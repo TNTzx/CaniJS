@@ -49,36 +49,33 @@ export class HErrorEmbedDataCannotFetch extends DjsTools.HandleableError {
 
 
 export async function generateEmbed(claimables: Prisma.BMCC_ClaimableGetPayload<undefined>[]) {
-    function sortChannels(channelOrHErrors: (General.HErrorClaimableChannelNotFound | Djs.TextChannel)[]) {
-        return [...channelOrHErrors].sort((a, b) => {
-            if (a instanceof General.HErrorClaimableChannelNotFound) return -1
-            if (b instanceof General.HErrorClaimableChannelNotFound) return +1
-            return a.name.localeCompare(b.name, undefined, {sensitivity: "base"})
+    function sortResults(results: Awaited<ReturnType<typeof General.getChannelsFromClaimables>>) {
+        return [...results].sort((a, b) => {
+            if (a.result instanceof General.HErrorClaimableChannelNotFound) return -1
+            if (b.result instanceof General.HErrorClaimableChannelNotFound) return +1
+            return a.result.name.localeCompare(b.result.name, undefined, {sensitivity: "base"})
         })
     }
 
     let fields: Djs.EmbedField[]
 
     if (claimables.length > 0) {
-        const channelOrHErrors = await General.getChannelsFromClaimables(claimables)
-        const sortedChannelOrHErrors = sortChannels(channelOrHErrors)
-        fields = sortedChannelOrHErrors.map((channelOrHError, idx) => {
-            const claimable = claimables[idx]
-
-            if (channelOrHError instanceof General.HErrorClaimableChannelNotFound) {
+        const results = await General.getChannelsFromClaimables(claimables)
+        const sortedResults = sortResults(results)
+        fields = sortedResults.map((result) => {
+            if (result.result instanceof General.HErrorClaimableChannelNotFound) {
                 // TODO make /cc edit-channels clear-invalid
                 return {
-                    name: `${claimable.channelSid} (${Djs.underscore("Unknown channel")})`,
+                    name: `${result.claimable.channelSid} (${Djs.underscore("Unknown channel")})`,
                     // TODO reference commands
                     value: "This channel is not accessible or has been deleted. Please use /cc edit-channels clear-invalid to clear this or give permission to the bot to access this.",
                     inline: false
                 }
             } else {
-                const channel = channelOrHError
                 return {
-                    name: `${channel.toString()} : ${claimable.isClaimed ? "Claimed" : "Unclaimed"}`,
-                    value: (claimable.isClaimed ? `${Djs.underscore("Location")}: ${Djs.bold(claimable.location ?? "<unknown>")}\n` : "") +
-                        `Updated ${Djs.time(claimable.timeUpdated, Djs.TimestampStyles.RelativeTime)}`,
+                    name: `${result.result.toString()} : ${result.claimable.isClaimed ? "Claimed" : "Unclaimed"}`,
+                    value: (result.claimable.isClaimed ? `${Djs.underscore("Location")}: ${Djs.bold(result.claimable.location ?? "<unknown>")}\n` : "") +
+                        `Updated ${Djs.time(result.claimable.timeUpdated, Djs.TimestampStyles.RelativeTime)}`,
                     inline: false
                 }
             }

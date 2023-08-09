@@ -98,14 +98,20 @@ export async function getChannelsFromClaimables(claimables: Prisma.BMCC_Claimabl
         try {
             channel = await DjsTools.getClient().channels.fetch(claimable.channelSid)
         } catch (error) {
-            if (error instanceof Djs.DiscordAPIError && error.code === 10003) return new HErrorClaimableChannelNotFound(claimable.channelSid)
+            if (error instanceof Djs.DiscordAPIError && error.code === 10003) return {
+                claimable: claimable,
+                result: new HErrorClaimableChannelNotFound(claimable.channelSid)
+            }
             throw error
         }
 
         if (channel === null || !(channel instanceof Djs.TextChannel)) {
             throw new ErrorClaimableNotTextChannel(claimable.channelSid)
         }
-        return channel
+        return {
+            claimable: claimable,
+            result: channel
+        }
     }))
 }
 
