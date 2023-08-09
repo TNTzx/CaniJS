@@ -6,6 +6,7 @@ import * as Moderation from "../moderation"
 
 import * as CmdGroup from "./cmd_group"
 import * as General from "./general"
+import * as EmbedDisplay from "./embed_display"
 
 
 
@@ -95,5 +96,8 @@ export const cmdEditChannels = CmdGroup.cmdGroupChannelClaiming.addSubTemplateLe
             }
             await interaction.followUp(`Removed ${channel.toString()} as a claimable channel!`)
         }
+
+        // TEST
+        await EmbedDisplay.updateEmbedFromGuild(interaction.guild)
     },
 })

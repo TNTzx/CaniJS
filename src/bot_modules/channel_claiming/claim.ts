@@ -4,6 +4,7 @@ import * as DjsTools from "djs-tools"
 
 import * as Group from "./cmd_group"
 import * as General from "./general"
+import * as EmbedDisplay from "./embed_display"
 
 
 
@@ -62,6 +63,9 @@ export const cmdClaim = Group.cmdGroupChannelClaiming.addSubTemplateLeaf({
             `Current location: ${Djs.bold(location)}\n` +
             getUpdateTimeDisplay(result.timeUpdated)
         )
+
+        // TEST
+        await EmbedDisplay.updateEmbedFromGuild(interaction.guild)
     }
 })
 
@@ -85,5 +89,8 @@ export const cmdUnclaim = Group.cmdGroupChannelClaiming.addSubTemplateLeaf({
             Djs.bold("Channel has been unclaimed!") + "\n" +
             getUpdateTimeDisplay(result.timeUpdated)
         )
+
+        // TEST
+        await EmbedDisplay.updateEmbedFromGuild(interaction.guild)
     }
 })

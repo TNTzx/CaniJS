@@ -2,21 +2,17 @@ import { Prisma } from "@prisma/client"
 import * as Djs from "discord.js"
 import * as DjsTools from "djs-tools"
 
+import * as Moderation from "../moderation"
 import * as CmdGroup from "./cmd_group"
+import * as General from "./general"
 
 
 
-export class HErrorEmbedDataNotFound extends DjsTools.HandleableError {
-    private __nominalHErrorEmbedDataNotFound() {}
+export class ErrorEmbedDataNotFound extends DjsTools.HandleableError {
+    private __nominalErrorEmbedDataNotFound() {}
 
     constructor(public guild: Djs.Guild, cause?: Error) {
         super(`GuildSID ${guild.id} doesn't have channel claiming embed data.`, cause)
-    }
-
-    public override getDisplayMessage(): string {
-        // TODO reference commands
-        return "This server doesn't have a set channel to display embeds yet! " +
-        "Please set an embed using the /cc set-embed-display command!"
     }
 }
 
@@ -56,40 +52,32 @@ export async function generateEmbed(claimables: Prisma.BMCC_ClaimableGetPayload<
     let fields: Djs.EmbedField[]
 
     if (claimables.length > 0) {
-        fields = await Promise.all(claimables.map(async claimable => {
-            const channel = await DjsTools.getClient().channels.fetch(claimable.channelSid)
-            // TEST
-            if (channel === null) {
+        const channelOrHErrors = await General.getChannelsFromClaimables(claimables)
+        fields = channelOrHErrors.map((channelOrHError, idx) => {
+            const claimable = claimables[idx]
+
+            if (channelOrHError instanceof General.HErrorClaimableChannelNotFound) {
+                // TODO make /cc edit-channels clear-invalid
                 return {
                     name: `${claimable.channelSid} (${Djs.underscore("Unknown channel")})`,
                     // TODO reference commands
-                    value: "This channel is not accessible or has been deleted. Please remove this channel and/or replace it using /cc edit-channels.",
+                    value: "This channel is not accessible or has been deleted. Please use /cc edit-channels clear-invalid to clear this or give permission to the bot to access this.",
                     inline: false
                 }
-            }
-
-            if (!(channel instanceof Djs.TextChannel)) {
+            } else {
+                const channel = channelOrHError
                 return {
-                    name: `${channel.toString()} (${Djs.underscore("Invalid channel type")})`,
-                    // TODO reference commands
-                    value: "This channel is not a text channel. Please remove this channel using /cc edit-channels.",
+                    name: `${channel.toString()} : ${claimable.isClaimed ? "Claimed" : "Unclaimed"}`,
+                    value: (claimable.isClaimed ? `${Djs.underscore("Location")}: ${Djs.bold(claimable.location ?? "<unknown>")}\n` : "") +
+                        `Updated ${Djs.time(claimable.timeUpdated, Djs.TimestampStyles.RelativeTime)}`,
                     inline: false
                 }
             }
-
-            // TEST
-            return {
-                name: `${channel.toString()} : ${claimable.isClaimed ? "Claimed" : "Unclaimed"}`,
-                value: (claimable.isClaimed ? `Location: ${claimable.location}\n` : "") +
-                    `Updated ${Djs.time(claimable.timeUpdated, Djs.TimestampStyles.ShortDateTime)}`,
-                inline: false
-            }
-        }))
+        })
     } else {
         fields = [{
-            // TESTCOMPLETE
-            // TODO reference commands
             name: "No claimable channels!",
+            // TODO reference commands
             value: "There are no claimable channels. Add one using /cc edit-channels!",
             inline: false
         }]
@@ -109,23 +97,43 @@ export async function updateEmbedFromBMCC(
     claimables: Prisma.BMCC_ClaimableGetPayload<undefined>[],
     embedData: Prisma.BMCC_EmbedDataGetPayload<undefined>
 ) {
-    // TEST on implementation
     if ((!embedData.isSet) || embedData.channelSid === null || embedData.messageSid === null) {
         throw new HErrorEmbedDataNotSet(guild)
     }
 
     const botClient = DjsTools.getClient()
-    const channel = await botClient.channels.fetch(embedData.channelSid)
-    // TEST
+    let channel
+    try {
+        channel = await botClient.channels.fetch(embedData.channelSid, {force: true})
+    } catch (error) {
+        if (error instanceof Djs.DiscordAPIError && error.code === 10003) throw new HErrorEmbedDataCannotFetch(guild, "channel", error)
+        throw error
+    }
     if (channel === null || !(channel instanceof Djs.TextChannel)) throw new HErrorEmbedDataCannotFetch(guild, "channel")
-    const message = await channel.messages.fetch(embedData.messageSid)
-    // TODO missing message
+
+    let message
+    try {
+        message = await channel.messages.fetch({message: embedData.messageSid, force: true})
+    } catch (error) {
+        if (error instanceof Djs.DiscordAPIError && error.code === 10008) throw new HErrorEmbedDataCannotFetch(guild, "message", error)
+        throw error
+    }
 
     const embed = await generateEmbed(claimables)
-    // TESTCOMPLETE regular
-    await message.edit({content: "", embeds: [embed]})
+    await message.edit({content: "__ __", embeds: [embed]})
 
     return message
+}
+
+export async function updateEmbedFromGuild(guild: Djs.Guild) {
+    const bmcc = await DjsTools.getPrismaClient().bMChannelClaiming.findUniqueOrThrow({
+        where: {guildSid: guild.id},
+        include: {claimables: true, embedData: true}
+    })
+
+    if (bmcc.embedData === null) throw new ErrorEmbedDataNotFound(guild)
+
+    return await updateEmbedFromBMCC(guild, bmcc.claimables, bmcc.embedData)
 }
 
 
@@ -151,6 +159,14 @@ export async function setEmbedMessage(guild: Djs.Guild, channel: Djs.TextChannel
 
 
 
+export const cmdGroupEmbed = CmdGroup.cmdGroupChannelClaiming.addSubTemplateGroup({
+    id: "embed-display",
+    description: "Embed display controls for channel claiming.",
+    useCases: [Moderation.caseIsAdmin]
+})
+
+
+
 const paramsEditEmbed = [
     new DjsTools.CmdParamChannel({
         required: true,
@@ -159,13 +175,26 @@ const paramsEditEmbed = [
         validChannelTypes: [DjsTools.ChannelRestrict.Text]
     })
 ]
-export const cmdEditEmbed = CmdGroup.cmdGroupChannelClaiming.addSubTemplateLeaf({
-    id: "set-embed-display",
+export const cmdEditEmbed = cmdGroupEmbed.addSubTemplateLeaf({
+    id: "set",
     description: "Sets the channel where the embed display would go.",
     parameters: paramsEditEmbed,
+
     async executeFunc(interaction, [channel]) {
         await interaction.editReply(`Setting channel ${channel.toString()} as the embed display channel...`)
         const message = await setEmbedMessage(interaction.guild, channel)
         await interaction.followUp(`The channel is now set! The display can be found at ${message.url}.`)
     },
+})
+
+
+export const cmdUpdateEmbed = cmdGroupEmbed.addSubTemplateLeaf({
+    id: "update",
+    description: "Updates the embed display for claim channels.",
+
+    async executeFunc(interaction, _args) {
+        await interaction.editReply("Updating the embed display...")
+        const message = await updateEmbedFromGuild(interaction.guild)
+        await interaction.followUp(`Updated. The display can be found at ${message.url}.`)
+    }
 })

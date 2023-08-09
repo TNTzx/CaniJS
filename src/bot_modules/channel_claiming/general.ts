@@ -70,6 +70,45 @@ export async function getClaimableChannels(guild: Djs.Guild) {
     }
 }
 
+
+
+export class HErrorClaimableChannelNotFound extends DjsTools.HandleableError {
+    private __nominalHErrorClaimableChannelNotFound() {}
+
+    constructor(public channelSid: string, cause?: Error) {
+        super(`Claimable ChannelSID ${channelSid} cannot be accessed or is deleted.`, cause)
+    }
+
+    public override getDisplayMessage(): string {
+        return "The channel is deleted or the channel cannot be accessed by the bot!"
+    }
+}
+
+export class ErrorClaimableNotTextChannel extends Error {
+    private __nominalErrorClaimableNotTextChannel() {}
+    constructor(public channelSid: string, cause?: Error) {
+        super(`Claimable ChannelSID ${channelSid} is not a text channel.`, cause)
+    }
+}
+
+
+export async function getChannelsFromClaimables(claimables: Prisma.BMCC_ClaimableGetPayload<undefined>[]) {
+    return await Promise.all(claimables.map(async claimable => {
+        let channel
+        try {
+            channel = await DjsTools.getClient().channels.fetch(claimable.channelSid)
+        } catch (error) {
+            if (error instanceof Djs.DiscordAPIError && error.code === 10003) return new HErrorClaimableChannelNotFound(claimable.channelSid)
+            throw error
+        }
+
+        if (channel === null || !(channel instanceof Djs.TextChannel)) {
+            throw new ErrorClaimableNotTextChannel(claimable.channelSid)
+        }
+        return channel
+    }))
+}
+
 export async function getClaimableChannel(guild: Djs.Guild, channel: Djs.TextChannel) {
     try {
         const result = await DjsTools.getPrismaClient().bMCC_Claimable.findUniqueOrThrow({

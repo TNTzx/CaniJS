@@ -27,7 +27,7 @@ export const cmdTestNormal = new DjsTools.CmdTemplateLeaf({
 
     async executeFunc(interaction, [channel, messageSid]) {
         await interaction.editReply("Command executing...")
-        const result = await channel.messages.fetch(messageSid)
+        const result = await channel.messages.fetch({message: messageSid, force: true})
         await interaction.followUp(result.url)
     }
 })
