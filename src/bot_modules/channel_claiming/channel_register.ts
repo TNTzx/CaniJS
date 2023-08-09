@@ -75,7 +75,7 @@ export const cmdEditChannels = CmdGroup.cmdGroupChannelClaiming.addSubTemplateLe
     parameters: paramsEditChannels,
     useCases: [Moderation.caseIsAdmin],
     async executeFunc(interaction, [action, channel]) {
-        await interaction.editReply("Editing the claimable channels list...")
+        await interaction.followUp("Editing the claimable channels list...")
 
         if (action === "add") {
             try {

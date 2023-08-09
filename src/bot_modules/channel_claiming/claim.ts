@@ -49,7 +49,7 @@ export const cmdClaim = Group.cmdGroupChannelClaiming.addSubTemplateLeaf({
     parameters: paramsClaim,
 
     async executeFunc(interaction, [location]) {
-        await interaction.editReply("Claiming current channel...")
+        await interaction.followUp("Claiming current channel...")
 
         const channel = interaction.channel
         if (!(channel instanceof Djs.TextChannel)) {
@@ -76,7 +76,7 @@ export const cmdUnclaim = Group.cmdGroupChannelClaiming.addSubTemplateLeaf({
     description: "Unclaims the current channel and marks it as free to use.",
 
     async executeFunc(interaction, _args) {
-        await interaction.editReply("Unclaiming current channel...")
+        await interaction.followUp("Unclaiming current channel...")
 
         const channel = interaction.channel
         if (!(channel instanceof Djs.TextChannel)) {

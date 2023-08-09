@@ -181,7 +181,7 @@ export const cmdEditEmbed = cmdGroupEmbed.addSubTemplateLeaf({
     parameters: paramsEditEmbed,
 
     async executeFunc(interaction, [channel]) {
-        await interaction.editReply(`Setting channel ${channel.toString()} as the embed display channel...`)
+        await interaction.followUp(`Setting channel ${channel.toString()} as the embed display channel...`)
         const message = await setEmbedMessage(interaction.guild, channel)
         await interaction.followUp(`The channel is now set! The display can be found at ${message.url}.`)
     },
@@ -193,7 +193,7 @@ export const cmdUpdateEmbed = cmdGroupEmbed.addSubTemplateLeaf({
     description: "Updates the embed display for claim channels.",
 
     async executeFunc(interaction, _args) {
-        await interaction.editReply("Updating the embed display...")
+        await interaction.followUp("Updating the embed display...")
         const message = await updateEmbedFromGuild(interaction.guild)
         await interaction.followUp(`Updated. The display can be found at ${message.url}.`)
     }

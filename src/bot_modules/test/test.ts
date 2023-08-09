@@ -26,7 +26,7 @@ export const cmdTestNormal = new DjsTools.CmdTemplateLeaf({
     // useCases: [Admin.caseIsAdmin],
 
     async executeFunc(interaction, [channel, messageSid]) {
-        await interaction.editReply("Command executing...")
+        await interaction.followUp("Command executing...")
         const result = await channel.messages.fetch({message: messageSid, force: true})
         await interaction.followUp(result.url)
     }
@@ -137,7 +137,7 @@ const cmdTestParam = new DjsTools.CmdTemplateLeaf({
             results.push(arg.toString())
         }
 
-        await interaction.editReply(results.join("\n"))
+        await interaction.followUp(results.join("\n"))
     }
 })
 
@@ -189,7 +189,7 @@ const caseC = new DjsTools.UseCase({
 
 
 async function genericExecute(interaction: Djs.ChatInputCommandInteraction) {
-    await interaction.editReply("test success")
+    await interaction.followUp("test success")
 }
 
 export const cmdTestGroupA = new DjsTools.CmdTemplateGroup({

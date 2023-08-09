@@ -5,7 +5,7 @@ import * as DjsTools from "djs-tools"
 
 
 export class HErrorAdminRoleNotSet extends DjsTools.HandleableError {
-    private __nominalHErrorAdminRoleNotSet() {}
+    private __nominalHErrorAdminRoleNotSet() { }
 
     constructor(public guild: Djs.Guild, cause?: Error) {
         super(`The admin role for GuildSID ${guild.id} is not set.`, cause)
@@ -17,7 +17,7 @@ export class HErrorAdminRoleNotSet extends DjsTools.HandleableError {
 }
 
 export class HErrorAdminRoleNotFound extends DjsTools.HandleableError {
-    private __nominalHErrorAdminRoleNotSet() {}
+    private __nominalHErrorAdminRoleNotSet() { }
 
     constructor(public supposedAdminRoleSid: string, public guild: Djs.Guild, cause?: Error) {
         super(`The admin role SID ${supposedAdminRoleSid} for GuildSID ${guild.id} is not found.`, cause)
@@ -30,7 +30,7 @@ export class HErrorAdminRoleNotFound extends DjsTools.HandleableError {
 }
 
 export class HErrorUserNotAdmin extends DjsTools.HandleableError {
-    private __nominalHErrorUCNoAdminRole() {}
+    private __nominalHErrorUCNoAdminRole() { }
 
     constructor(public guild: Djs.Guild, public adminRole: Djs.Role, public member: Djs.GuildMember, cause?: Error) {
         super(`MemberSID ${member.id} doesn't have the admin role SID ${adminRole.id} in GuildSID ${guild.id}.`, cause)
@@ -44,7 +44,7 @@ export class HErrorUserNotAdmin extends DjsTools.HandleableError {
 
 async function getAdminRoleSid(guildSid: string) {
     const prismaBMAdmin = await DjsTools.getPrismaClient().bMAdmin.findUniqueOrThrow({
-        where: {guildSid: guildSid}
+        where: { guildSid: guildSid }
     })
 
     return prismaBMAdmin.adminSid
@@ -92,7 +92,7 @@ export const cmdSetAdmin = new DjsTools.CmdTemplateLeaf({
     useCases: [DjsTools.caseServerOwner],
 
     async executeFunc(interaction, args) {
-        await interaction.editReply(`Setting admin to ${Djs.inlineCode(args[0].name)}...`)
+        await interaction.followUp(`Setting admin to ${Djs.inlineCode(args[0].name)}...`)
 
         const currentAdminRoleSid = await getAdminRoleSid(interaction.guild.id)
         if (currentAdminRoleSid === args[0].id) {

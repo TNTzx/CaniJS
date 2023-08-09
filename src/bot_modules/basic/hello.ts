@@ -7,6 +7,6 @@ export const cmdHello = new DjsTools.CmdTemplateLeaf({
     description: "Says hello! Dog!",
     useScope: DjsTools.useScopeAll,
     async executeFunc(interaction, _args) {
-        await interaction.editReply("Hellooo! :D")
+        await interaction.followUp("Hellooo! :D")
     }
 })
