@@ -49,11 +49,20 @@ export class HErrorEmbedDataCannotFetch extends DjsTools.HandleableError {
 
 
 export async function generateEmbed(claimables: Prisma.BMCC_ClaimableGetPayload<undefined>[]) {
+    function sortChannels(channelOrHErrors: (General.HErrorClaimableChannelNotFound | Djs.TextChannel)[]) {
+        return [...channelOrHErrors].sort((a, b) => {
+            if (a instanceof General.HErrorClaimableChannelNotFound) return -1
+            if (b instanceof General.HErrorClaimableChannelNotFound) return +1
+            return a.name.localeCompare(b.name, undefined, {sensitivity: "base"})
+        })
+    }
+
     let fields: Djs.EmbedField[]
 
     if (claimables.length > 0) {
         const channelOrHErrors = await General.getChannelsFromClaimables(claimables)
-        fields = channelOrHErrors.map((channelOrHError, idx) => {
+        const sortedChannelOrHErrors = sortChannels(channelOrHErrors)
+        fields = sortedChannelOrHErrors.map((channelOrHError, idx) => {
             const claimable = claimables[idx]
 
             if (channelOrHError instanceof General.HErrorClaimableChannelNotFound) {
