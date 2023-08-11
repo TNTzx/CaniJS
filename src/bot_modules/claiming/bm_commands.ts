@@ -1,3 +1,5 @@
+import _s from "underscore.string"
+
 import * as DjsTools from "djs-tools"
 
 import * as Moderation from "../moderation"
@@ -11,29 +13,52 @@ export const cmdGroupChannelClaiming = new DjsTools.CmdTemplateGroup({
 } as const)
 
 
-
-export const cmdEditChannels = cmdGroupChannelClaiming.addSubTemplateLeaf({
+export const cmdGroupEditChannels = cmdGroupChannelClaiming.addSubTemplateGroup({
     id: "edit-channels",
-    description: "Edits the channels able to be claimed.",
-    parameters: [
-        new DjsTools.CmdParamString({
-            required: true,
-            name: "action",
-            description: "The action to do.",
-            choiceManager: new DjsTools.ChoiceManager([
-                DjsTools.createGenericChoice("add"),
-                DjsTools.createGenericChoice("remove")
-            ])
-        } as const),
+    description: "Commands that change what channels are claimable or not.",
+    useCases: [Moderation.caseIsAdmin]
+} as const)
+
+
+
+function getEditChannelsDesc(action: "add" | "remove") {
+    return `${_s.capitalize(action)}s a channel as a claimable channel.`
+}
+
+function getEditChannelsParam(action: "add" | "remove") {
+    return [
         new DjsTools.CmdParamChannel({
             required: true,
             name: "channel",
-            description: "The channel to add / remove as a claimable channel.",
+            description: `The channel to ${action} as a claimable channel.`,
             validChannelTypes: [DjsTools.ChannelRestrict.Text]
         } as const)
-    ] as const,
-    useCases: [Moderation.caseIsAdmin]
-})
+    ] as const
+}
+
+export const cmdEditChannelsAdd = cmdGroupEditChannels.addSubTemplateLeaf({
+    id: "add",
+    description: getEditChannelsDesc("add"),
+    parameters: getEditChannelsParam("add"),
+} as const)
+
+export const cmdEditChannelsRemove = cmdGroupEditChannels.addSubTemplateLeaf({
+    id: "remove",
+    description: getEditChannelsDesc("remove"),
+    parameters: getEditChannelsParam("remove"),
+} as const)
+
+export const cmdEditChannelsRemoveDeleted = cmdGroupEditChannels.addSubTemplateLeaf({
+    id: "remove-deleted",
+    description: "Removes a channel that has been deleted but still remained as a claimable channel.",
+    parameters: [
+        new DjsTools.CmdParamString({
+            required: true,
+            name: "deleted-channel-id",
+            description: "The string of numbers that appear on the display embed which refers to the deleted channel."
+        } as const)
+    ],
+} as const)
 
 
 

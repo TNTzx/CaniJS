@@ -64,20 +64,18 @@ export async function generateEmbed(
         const sortedResults = sortResults(results)
         fields = sortedResults.map((result) => {
             if (result.result instanceof DjsTools.HandleableError) {
-                // TODO make /cc edit-channels clear-invalid
                 if (result.result instanceof General.HErrorClaimableChannelNotFound) {
                     return {
                         name: `${result.claimable.channelSid} (${Djs.underscore("Deleted channel")})`,
-                        // TODO reference commands
-                        value: "This channel is deleted. Please use /cc edit-channels clear-invalid to clear this.",
+                        value: `This channel is deleted. Please use ${BMCmds.cmdEditChannelsRemoveDeleted.getReferenceDisplay()} to clear this.`,
                         inline: false
                     }
                 } else if (result.result instanceof General.HErrorClaimableForbidden) {
                     return {
                         name: `${result.claimable.channelSid} (${Djs.underscore("Channel Unaccessible")})`,
-                        // TODO reference commands
                         value: "This channel cannot be accessed by the bot. " +
-                            "Please give the bot permission to view this channel or use /cc edit-channels clear-invalid to clear this.",
+                            "Please give the bot permission to view this channel " +
+                            `or use ${BMCmds.cmdEditChannelsRemoveDeleted.getReferenceDisplay()} to clear this.`,
                         inline: false
                     }
                 } else {
@@ -96,7 +94,7 @@ export async function generateEmbed(
         fields = [{
             name: "No claimable channels!",
             // TODO reference commands
-            value: `There are no claimable channels. Add one using ${BMCmds.cmdEditChannels.getReferenceDisplay()}!`,
+            value: `There are no claimable channels. Add one using ${BMCmds.cmdEditChannelsAdd.getReferenceDisplay()}!`,
             inline: false
         }]
     }

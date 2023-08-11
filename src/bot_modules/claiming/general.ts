@@ -29,6 +29,18 @@ export class HErrorClaimableAlreadyExists extends DjsTools.HandleableError {
     }
 }
 
+export class HErrorClaimableNotExistsGeneral extends DjsTools.HandleableError {
+    private __nominalClaimableNotExists() {}
+
+    constructor(public guild: Djs.Guild, public channelSid: string, cause?: Error) {
+        super(`GuildSID ${guild.id} doesn't have a registered channel of SID ${channelSid}.`, cause)
+    }
+
+    public override getDisplayMessage(): string {
+        return `The channel with ID ${this.channelSid} is not a claimable channel!`
+    }
+}
+
 export class HErrorClaimableNotExists extends DjsTools.HandleableError {
     private __nominalClaimableNotExists() {}
 
