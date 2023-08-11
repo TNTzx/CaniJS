@@ -1,3 +1,3 @@
-export * from "./bot_module"
+export * from "./bm_module"
 
 export * from "./hello"

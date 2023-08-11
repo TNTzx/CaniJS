@@ -1,6 +1,7 @@
 import Djs from "discord.js"
 
 import * as DjsTools from "djs-tools"
+import * as BMCmds from "./bm_commands"
 
 
 
@@ -16,6 +17,18 @@ export class HErrorAdminRoleNotSet extends DjsTools.HandleableError {
     }
 }
 
+export class HErrorAdminRoleSameBeingSet extends DjsTools.HandleableError {
+    private __nominalHErrorAdminRoleSameBeingSet() {}
+
+    constructor(public guild: Djs.Guild, cause?: Error) {
+        super(`GuildSID ${guild.id} has its admin role being set to the already set admin role.`, cause)
+    }
+
+    public override getDisplayMessage(): string {
+        return "That's already the admin role!"
+    }
+}
+
 export class HErrorAdminRoleNotFound extends DjsTools.HandleableError {
     private __nominalHErrorAdminRoleNotSet() { }
 
@@ -24,7 +37,7 @@ export class HErrorAdminRoleNotFound extends DjsTools.HandleableError {
     }
 
     public override getDisplayMessage(): string {
-        return `The admin role for this server is not set to a valid role! Please set another admin role using ${cmdSetAdmin.getReferenceDisplay()}.`
+        return `The admin role for this server is not set to a valid role! Please set another admin role using ${BMCmds.cmdSetAdmin.getReferenceDisplay()}.`
     }
 }
 
@@ -76,31 +89,13 @@ async function editAdminRole(guildSid: string, adminRoleSid: string) {
 
 
 
-const paramSetAdmin = [
-    new DjsTools.CmdParamRole({
-        required: true,
-        name: "admin-role",
-        description: "The new admin role."
-    })
-] as const
-export const cmdSetAdmin = new DjsTools.CmdTemplateLeaf({
-    id: "set-admin",
-    description: "Sets the admin role for this server.",
-    useScope: DjsTools.useScopeGuildOnly,
-    parameters: paramSetAdmin,
-    useCases: [DjsTools.caseServerOwner],
+BMCmds.cmdSetAdmin.setExecuteFunc(async (interaction, [adminRole]) => {
+    await interaction.followUp(`Setting admin to ${Djs.inlineCode(adminRole.name)}...`)
 
-    async executeFunc(interaction, args) {
-        await interaction.followUp(`Setting admin to ${Djs.inlineCode(args[0].name)}...`)
+    const currentAdminRoleSid = await getAdminRoleSid(interaction.guild.id)
+    if (currentAdminRoleSid === adminRole.id) throw new HErrorAdminRoleSameBeingSet(interaction.guild)
 
-        const currentAdminRoleSid = await getAdminRoleSid(interaction.guild.id)
-        if (currentAdminRoleSid === args[0].id) {
-            await interaction.followUp("That role is already the admin role set for this server!")
-            return
-        }
+    await editAdminRole(interaction.guild.id, adminRole.id)
 
-        await editAdminRole(interaction.guild.id, args[0].id)
-
-        await interaction.followUp("The admin role for this server has been set.")
-    }
+    await interaction.followUp("The admin role for this server has been set.")
 })

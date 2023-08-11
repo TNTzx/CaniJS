@@ -1,6 +1,6 @@
 import * as DjsTools from "djs-tools"
 
-import * as CmdGroup from "./cmd_group"
+import * as CmdGroup from "./bm_commands"
 
 
 
@@ -10,25 +10,25 @@ export const botModule = new DjsTools.BotModule({
     dbGuildSetupper: new DjsTools.DBGuildSetupper({
         async isAlreadySetup(guildSid) {
             const result = await DjsTools.getPrismaClient().bMChannelClaiming.findFirst({
-                where: {guildSid: guildSid}
+                where: { guildSid: guildSid }
             })
 
             return !(result === null)
         },
 
         getSetupData(_guildSid) {
-            return {bmChannelClaiming: {create: {}}}
+            return { bmChannelClaiming: { create: {} } }
         },
 
         async botModuleUpdator(guildSid) {
             const prisma = DjsTools.getPrismaClient()
             const result = await prisma.bMCC_EmbedData.findFirst({
-                where: {bmChannelClaiming: {guildSid: guildSid}}
+                where: { bmChannelClaiming: { guildSid: guildSid } }
             })
 
             if (result === null) {
                 await prisma.bMCC_EmbedData.create({
-                    data: {bmChannelClaiming: {connect: {guildSid: guildSid}}}
+                    data: { bmChannelClaiming: { connect: { guildSid: guildSid } } }
                 })
             }
         },

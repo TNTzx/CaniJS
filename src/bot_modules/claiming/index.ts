@@ -1,6 +1,5 @@
-export * from "./bot_module"
-
-export * from "./cmd_group"
+export * from "./bm_module"
+export * from "./bm_commands"
 export * from "./general"
 
 export * from "./channel_register"

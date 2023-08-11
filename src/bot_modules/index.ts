@@ -4,7 +4,7 @@ import * as Test from "./test"
 
 import * as Basic from "./basic"
 import * as Moderation from "./moderation"
-import * as ChannelClaiming from "./channel_claiming"
+import * as ChannelClaiming from "./claiming"
 
 
 const botModules: DjsTools.BotModule[] = [

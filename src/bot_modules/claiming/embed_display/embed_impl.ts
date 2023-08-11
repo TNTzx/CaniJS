@@ -2,14 +2,13 @@ import { Prisma } from "@prisma/client"
 import * as Djs from "discord.js"
 import * as DjsTools from "djs-tools"
 
-import * as Moderation from "../moderation"
-import * as CmdGroup from "./cmd_group"
-import * as General from "./general"
+import * as BMCmds from "../bm_commands"
+import * as General from "../general"
 
 
 
 export class ErrorEmbedDataNotFound extends DjsTools.HandleableError {
-    private __nominalErrorEmbedDataNotFound() {}
+    private __nominalErrorEmbedDataNotFound() { }
 
     constructor(public guild: Djs.Guild, cause?: Error) {
         super(`GuildSID ${guild.id} doesn't have channel claiming embed data.`, cause)
@@ -17,21 +16,20 @@ export class ErrorEmbedDataNotFound extends DjsTools.HandleableError {
 }
 
 export class HErrorEmbedDataNotSet extends DjsTools.HandleableError {
-    private __nominalHErrorEmbedDataNotSet() {}
+    private __nominalHErrorEmbedDataNotSet() { }
 
     constructor(public guild: Djs.Guild, cause?: Error) {
         super(`GuildSID ${guild.id} has no set channel claiming embed data.`, cause)
     }
 
     public override getDisplayMessage(): string {
-        // TODO reference commands
         return "This server doesn't have a set channel to display embeds yet! " +
-        "Please set an embed using the /cc set-embed-display command!"
+            `Please set an embed using the ${BMCmds.cmdSetEmbed.getReferenceDisplay()} command!`
     }
 }
 
 export class HErrorEmbedDataCannotFetch extends DjsTools.HandleableError {
-    private __nominalHErrorEmbedDataCannotFetch() {}
+    private __nominalHErrorEmbedDataCannotFetch() { }
 
     constructor(public guild: Djs.Guild, public type: "channel" | "message", cause?: Error) {
         super(`GuildSID ${guild.id} has a channel claiming embed but bot cannot access the ${type}.`, cause)
@@ -40,21 +38,22 @@ export class HErrorEmbedDataCannotFetch extends DjsTools.HandleableError {
     public override getDisplayMessage(): string {
         const actionRequired = this.type === "channel" ? "view the channel" : "view / edit the message"
 
-        // TODO reference commands
         return "This server's embed display cannot be accessed or is deleted. " +
-        `Please make sure the bot has permission to ${actionRequired} or set a new embed using /cc set-embed-display.`
+            `Please make sure the bot has permission to ${actionRequired} or set a new embed using ${BMCmds.cmdSetEmbed.getReferenceDisplay()}.`
     }
 }
 
 
 
-export async function generateEmbed(claimables: Prisma.BMCC_ClaimableGetPayload<undefined>[]) {
+export async function generateEmbed(
+    claimables: Prisma.BMCC_ClaimableGetPayload<undefined>[]
+) {
     function sortResults(results: Awaited<ReturnType<typeof General.getChannelsFromClaimables>>) {
         return [...results].sort((a, b) => {
             // TODO better handling
             if (a.result instanceof DjsTools.HandleableError) return +1
             if (b.result instanceof DjsTools.HandleableError) return -1
-            return a.result.name.localeCompare(b.result.name, undefined, {sensitivity: "base"})
+            return a.result.name.localeCompare(b.result.name, undefined, { sensitivity: "base" })
         })
     }
 
@@ -97,7 +96,7 @@ export async function generateEmbed(claimables: Prisma.BMCC_ClaimableGetPayload<
         fields = [{
             name: "No claimable channels!",
             // TODO reference commands
-            value: "There are no claimable channels. Add one using /cc edit-channels!",
+            value: `There are no claimable channels. Add one using ${BMCmds.cmdEditChannels.getReferenceDisplay()}!`,
             inline: false
         }]
     }
@@ -123,7 +122,7 @@ export async function updateEmbedFromBMCC(
     const botClient = DjsTools.getClient()
     let channel
     try {
-        channel = await botClient.channels.fetch(embedData.channelSid, {force: true})
+        channel = await botClient.channels.fetch(embedData.channelSid, { force: true })
     } catch (error) {
         if (error instanceof Djs.DiscordAPIError && error.code === 10003) throw new HErrorEmbedDataCannotFetch(guild, "channel", error)
         throw error
@@ -132,22 +131,22 @@ export async function updateEmbedFromBMCC(
 
     let message
     try {
-        message = await channel.messages.fetch({message: embedData.messageSid, force: true})
+        message = await channel.messages.fetch({ message: embedData.messageSid, force: true })
     } catch (error) {
         if (error instanceof Djs.DiscordAPIError && error.code === 10008) throw new HErrorEmbedDataCannotFetch(guild, "message", error)
         throw error
     }
 
     const embed = await generateEmbed(claimables)
-    await message.edit({content: "__ __", embeds: [embed]})
+    await message.edit({ content: "__ __", embeds: [embed] })
 
     return message
 }
 
 export async function updateEmbedFromGuild(guild: Djs.Guild) {
     const bmcc = await DjsTools.getPrismaClient().bMChannelClaiming.findUniqueOrThrow({
-        where: {guildSid: guild.id},
-        include: {claimables: true, embedData: true}
+        where: { guildSid: guild.id },
+        include: { claimables: true, embedData: true }
     })
 
     if (bmcc.embedData === null) throw new ErrorEmbedDataNotFound(guild)
@@ -160,12 +159,12 @@ export async function setEmbedMessage(guild: Djs.Guild, channel: Djs.TextChannel
     const message = await channel.send("Setting up embed, please wait!")
 
     const bmcc = await DjsTools.getPrismaClient().bMChannelClaiming.findUniqueOrThrow({
-        where: {guildSid: guild.id},
-        include: {claimables: true, embedData: true}
+        where: { guildSid: guild.id },
+        include: { claimables: true, embedData: true }
     })
 
     const embedData = await DjsTools.getPrismaClient().bMCC_EmbedData.update({
-        where: {bmChannelClaimingId: bmcc.id},
+        where: { bmChannelClaimingId: bmcc.id },
         data: {
             isSet: true,
             channelSid: channel.id,
@@ -178,42 +177,16 @@ export async function setEmbedMessage(guild: Djs.Guild, channel: Djs.TextChannel
 
 
 
-export const cmdGroupEmbed = CmdGroup.cmdGroupChannelClaiming.addSubTemplateGroup({
-    id: "embed-display",
-    description: "Embed display controls for channel claiming.",
-    useCases: [Moderation.caseIsAdmin]
+BMCmds.cmdSetEmbed.setExecuteFunc(async (interaction, [channel]) => {
+    await interaction.followUp(`Setting channel ${channel.toString()} as the embed display channel...`)
+    const message = await setEmbedMessage(interaction.guild, channel)
+    await interaction.followUp(`The channel is now set! The display can be found at ${message.url}.`)
 })
 
 
 
-const paramsEditEmbed = [
-    new DjsTools.CmdParamChannel({
-        required: true,
-        name: "channel",
-        description: "The channel where the embed message would display at.",
-        validChannelTypes: [DjsTools.ChannelRestrict.Text]
-    })
-]
-export const cmdEditEmbed = cmdGroupEmbed.addSubTemplateLeaf({
-    id: "set",
-    description: "Sets the channel where the embed display would go.",
-    parameters: paramsEditEmbed,
-
-    async executeFunc(interaction, [channel]) {
-        await interaction.followUp(`Setting channel ${channel.toString()} as the embed display channel...`)
-        const message = await setEmbedMessage(interaction.guild, channel)
-        await interaction.followUp(`The channel is now set! The display can be found at ${message.url}.`)
-    },
-})
-
-
-export const cmdUpdateEmbed = cmdGroupEmbed.addSubTemplateLeaf({
-    id: "update",
-    description: "Updates the embed display for claim channels.",
-
-    async executeFunc(interaction, _args) {
-        await interaction.followUp("Updating the embed display...")
-        const message = await updateEmbedFromGuild(interaction.guild)
-        await interaction.followUp(`Updated. The display can be found at ${message.url}.`)
-    }
+BMCmds.cmdUpdateEmbed.setExecuteFunc(async (interaction, _args) => {
+    await interaction.followUp("Updating the embed display...")
+    const message = await updateEmbedFromGuild(interaction.guild)
+    await interaction.followUp(`Updated. The display can be found at ${message.url}.`)
 })

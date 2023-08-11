@@ -1,6 +1,6 @@
 import * as DjsTools from "djs-tools"
 
-import * as Admin from "./admin"
+import * as CmdGroup from "./bm_commands"
 
 
 
@@ -22,6 +22,6 @@ export const botModule = new DjsTools.BotModule({
     }),
 
     cmdTemplates: [
-        Admin.cmdSetAdmin
+        CmdGroup.cmdSetAdmin
     ]
 })
