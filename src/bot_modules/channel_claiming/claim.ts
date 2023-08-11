@@ -8,21 +8,48 @@ import * as EmbedDisplay from "./embed_display"
 
 
 
+class HErrorClaimableAlreadyUnclaimed extends DjsTools.HandleableError {
+    private __nominalHErrorClaimableAlreadyUnclaimed() {}
+
+    constructor(public channel: Djs.TextChannel, cause?: Error) {
+        super(`ChannelSID ${channel.id} is already unclaimed.`, cause)
+    }
+
+    public override getDisplayMessage(): string {
+        return "This channel is already unclaimed!"
+    }
+}
+
+
+
 async function updateClaimStatus(channel: Djs.TextChannel, isClaimed: boolean, location: string | null) {
+    let channelSearch
+    try {
+        channelSearch = await DjsTools.getPrismaClient().bMCC_Claimable.findUniqueOrThrow({
+            where: {channelSid: channel.id}
+        })
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === "P2025") throw new General.HErrorClaimableNotExists(channel.guild, channel, error)
+        }
+        throw error
+    }
+
+    if ((!channelSearch.isClaimed) && (!isClaimed)) throw new HErrorClaimableAlreadyUnclaimed(channel)
+
     const currentTime = new Date()
 
     try {
-        await DjsTools.getPrismaClient().bMCC_Claimable.update({
-            where: {channelSid: channel.id},
+        return await DjsTools.getPrismaClient().bMCC_Claimable.update({
+            where: { channelSid: channelSearch.channelSid },
             data: {
                 isClaimed: isClaimed,
                 location: location,
                 timeUpdated: currentTime
             }
         })
-
-        return {timeUpdated: currentTime}
     } catch (error) {
+        // TODO prisma centralized handling
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
             if (error.code === "P2025") throw new General.HErrorClaimableNotExists(channel.guild, channel, error)
         }
