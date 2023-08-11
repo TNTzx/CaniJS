@@ -230,6 +230,26 @@ export const cmdTestGroupABBA = cmdTestGroupABB.addSubTemplateLeaf({
 
 
 
+// Command Reference
+export const cmdTestRef = new DjsTools.CmdTemplateLeaf({
+    id: "ref-test",
+    description: "Command reference testing",
+    useScope: DjsTools.useScopeGuildOnly,
+    // useCases: [Admin.caseIsAdmin],
+
+    async executeFunc(interaction, _args) {
+        const results = [
+            cmdTestGroupAA.getReferenceDisplay(),
+            cmdTestGroupABA.getReferenceDisplay(),
+            cmdTestGroupABBA.getReferenceDisplay()
+        ]
+
+        await interaction.followUp(results.join("\n"))
+    }
+})
+
+
+
 
 export default [
     cmdTestNormal,

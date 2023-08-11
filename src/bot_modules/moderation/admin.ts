@@ -24,8 +24,7 @@ export class HErrorAdminRoleNotFound extends DjsTools.HandleableError {
     }
 
     public override getDisplayMessage(): string {
-        // TODO reference commands
-        return "The admin role for this server is not set to a valid role! Please set another admin role using /set-admin."
+        return `The admin role for this server is not set to a valid role! Please set another admin role using ${cmdSetAdmin.getReferenceDisplay()}.`
     }
 }
 
