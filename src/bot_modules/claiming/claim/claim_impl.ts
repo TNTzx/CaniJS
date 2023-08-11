@@ -80,7 +80,6 @@ BMCmds.cmdClaim.setExecuteFunc(async (interaction, [location]) => {
         getUpdateTimeDisplay(result.timeUpdated)
     )
 
-    // TEST
     await EmbedDisplay.updateEmbedFromGuild(interaction.guild)
 })
 
@@ -102,6 +101,5 @@ BMCmds.cmdUnclaim.setExecuteFunc(async (interaction, _args) => {
         getUpdateTimeDisplay(result.timeUpdated)
     )
 
-    // TEST
     await EmbedDisplay.updateEmbedFromGuild(interaction.guild)
 })

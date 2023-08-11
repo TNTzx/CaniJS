@@ -24,7 +24,7 @@ export class HErrorEmbedDataNotSet extends DjsTools.HandleableError {
 
     public override getDisplayMessage(): string {
         return "This server doesn't have a set channel to display embeds yet! " +
-            `Please set an embed using the ${BMCmds.cmdSetEmbed.getReferenceDisplay()} command!`
+            `Please set an embed using the ${BMCmds.cmdEmbedSet.getReferenceDisplay()} command!`
     }
 }
 
@@ -39,7 +39,7 @@ export class HErrorEmbedDataCannotFetch extends DjsTools.HandleableError {
         const actionRequired = this.type === "channel" ? "view the channel" : "view / edit the message"
 
         return "This server's embed display cannot be accessed or is deleted. " +
-            `Please make sure the bot has permission to ${actionRequired} or set a new embed using ${BMCmds.cmdSetEmbed.getReferenceDisplay()}.`
+            `Please make sure the bot has permission to ${actionRequired} or set a new embed using ${BMCmds.cmdEmbedSet.getReferenceDisplay()}.`
     }
 }
 
@@ -93,7 +93,6 @@ export async function generateEmbed(
     } else {
         fields = [{
             name: "No claimable channels!",
-            // TODO reference commands
             value: `There are no claimable channels. Add one using ${BMCmds.cmdEditChannelsAdd.getReferenceDisplay()}!`,
             inline: false
         }]
@@ -175,7 +174,7 @@ export async function setEmbedMessage(guild: Djs.Guild, channel: Djs.TextChannel
 
 
 
-BMCmds.cmdSetEmbed.setExecuteFunc(async (interaction, [channel]) => {
+BMCmds.cmdEmbedSet.setExecuteFunc(async (interaction, [channel]) => {
     await interaction.followUp(`Setting channel ${channel.toString()} as the embed display channel...`)
     const message = await setEmbedMessage(interaction.guild, channel)
     await interaction.followUp(`The channel is now set! The display can be found at ${message.url}.`)
@@ -183,7 +182,7 @@ BMCmds.cmdSetEmbed.setExecuteFunc(async (interaction, [channel]) => {
 
 
 
-BMCmds.cmdUpdateEmbed.setExecuteFunc(async (interaction, _args) => {
+BMCmds.cmdEmbedUpdate.setExecuteFunc(async (interaction, _args) => {
     await interaction.followUp("Updating the embed display...")
     const message = await updateEmbedFromGuild(interaction.guild)
     await interaction.followUp(`Updated. The display can be found at ${message.url}.`)

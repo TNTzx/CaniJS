@@ -91,7 +91,7 @@ export const cmdGroupEmbed = cmdGroupChannelClaiming.addSubTemplateGroup({
 
 
 // TODO update names
-export const cmdSetEmbed = cmdGroupEmbed.addSubTemplateLeaf({
+export const cmdEmbedSet = cmdGroupEmbed.addSubTemplateLeaf({
     id: "set",
     description: "Sets the channel where the embed display would go.",
     parameters: [
@@ -104,7 +104,7 @@ export const cmdSetEmbed = cmdGroupEmbed.addSubTemplateLeaf({
     ]
 } as const)
 
-export const cmdUpdateEmbed = cmdGroupEmbed.addSubTemplateLeaf({
+export const cmdEmbedUpdate = cmdGroupEmbed.addSubTemplateLeaf({
     id: "update",
     description: "Updates the embed display for claim channels."
 })
