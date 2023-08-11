@@ -229,8 +229,12 @@ export const cmdTestGroupABBA = cmdTestGroupABB.addSubTemplateLeaf({
 })
 
 
-
 // Command Reference
+
+function referenceTest(command: DjsTools.CmdTemplateReferencer) {
+    return command.getReferenceDisplay()
+}
+
 export const cmdTestRef = new DjsTools.CmdTemplateLeaf({
     id: "ref-test",
     description: "Command reference testing",
@@ -241,7 +245,8 @@ export const cmdTestRef = new DjsTools.CmdTemplateLeaf({
         const results = [
             cmdTestGroupAA.getReferenceDisplay(),
             cmdTestGroupABA.getReferenceDisplay(),
-            cmdTestGroupABBA.getReferenceDisplay()
+            cmdTestGroupABBA.getReferenceDisplay(),
+            referenceTest(cmdTestGroupABBA)
         ]
 
         await interaction.followUp(results.join("\n"))
@@ -254,5 +259,6 @@ export const cmdTestRef = new DjsTools.CmdTemplateLeaf({
 export default [
     cmdTestNormal,
     cmdTestGroupA,
-    cmdTestParam
+    cmdTestParam,
+    cmdTestRef
 ]
